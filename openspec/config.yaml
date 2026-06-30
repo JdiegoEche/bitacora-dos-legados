@@ -1,0 +1,61 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Project: bitacora-dos-legados
+  Type: Web app (coffee brewing log / notebook), later mobile
+  Stack: TypeScript, Node.js (Hono/Express), React + Vite, Drizzle ORM, SQLite
+  Architecture: Independent backend + frontend (decoupled)
+  Testing: Not configured (empty project — no test runner detected)
+  Strict TDD: false
+
+rules:
+  proposal:
+    - State business problem and target users explicitly
+    - Define scope boundaries, non-goals, and first-slice limits
+    - Include risk assessment and rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Write delta specs (ADDED / MODIFIED / REMOVED / RENAMED)
+    - Keep specs domain-organized under openspec/specs/{domain}/
+  design:
+    - Include sequence diagrams or flow descriptions for complex flows
+    - Document architecture decisions with rationale
+    - Keep backend and frontend design separate
+    - Define data models with Drizzle schema patterns
+    - Plan API contract before frontend implementation
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - Separate backend tasks from frontend tasks
+    - Include Review Workload Forecast in task summary
+  apply:
+    - Follow existing code patterns once the codebase exists
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run build || npx tsc --noEmit"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - Merge delta specs into main spec under openspec/specs/
+
+testing:
+  strict_tdd: false
+  detected: "2026-06-30"
+  runner:
+    command: ""
+    framework: ""
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage:
+    available: false
+    command: ""
+  quality:
+    linter: false
+    type_checker: false
+    formatter: false
