@@ -15,12 +15,14 @@ export interface BrewSession {
   coffeeBeanId: number | null;
   grindSize: string | null;
   waterTemp: number | null;
-  brewTime: number | null;
+  brewTime: string | null;
   method: string;
+  grinder: string | null;
+  clicks: string | null;
   coffeeDose: number | null;
   waterDose: number | null;
   notes: string | null;
-  rating: number | null;
+  rating: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,12 +48,14 @@ export interface CreateBrewData {
   method: string;
   grindSize: string;
   waterTemp: number;
-  brewTime: number;
+  brewTime: string;
+  grinder?: string | null;
+  clicks?: string | null;
   coffeeDose: number;
   waterDose: number;
   coffeeBeanId: number | null;
   notes: string | null;
-  rating: number | null;
+  rating: string | null;
 }
 
 export interface CreateBeanData {
@@ -59,6 +63,16 @@ export interface CreateBeanData {
   roaster: string;
   origin?: string | null;
   roastLevel?: string | null;
+}
+
+export interface CoffeeBeanWithStats extends CoffeeBean {
+  avgRating: number | null;
+  brewCount: number;
+  methodBreakdown: Record<string, number>;
+}
+
+export interface BrewSessionWithNotes extends BrewSession {
+  tastingNotesSummary: string | null;
 }
 
 export interface CreateNoteData {

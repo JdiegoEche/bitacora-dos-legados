@@ -2,6 +2,8 @@ import type {
   BrewSession,
   BrewSessionDetail,
   CoffeeBean,
+  CoffeeBeanWithStats,
+  BrewSessionWithNotes,
   TastingNote,
   CreateBrewData,
   CreateBeanData,
@@ -22,11 +24,14 @@ export class ApiError extends Error {
 
 // ─── Generic helpers ────────────────────────────────────────────────────────
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 async function request<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(path, {
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   });
@@ -70,7 +75,10 @@ export const beansApi = {
   list: () => request<CoffeeBean[]>('/api/beans'),
 
   getById: (id: number) =>
-    request<CoffeeBean>(`/api/beans/${id}`),
+    request<CoffeeBeanWithStats>(`/api/beans/${id}`),
+
+  getBrewsByBean: (id: number) =>
+    request<BrewSessionWithNotes[]>(`/api/beans/${id}/brews`),
 
   create: (data: CreateBeanData) =>
     request<CoffeeBean>('/api/beans', {

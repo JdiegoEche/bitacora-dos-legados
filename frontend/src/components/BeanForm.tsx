@@ -9,11 +9,13 @@ interface BeanFormProps {
   /** Existing bean for edit mode, or undefined for create mode. */
   bean?: CoffeeBean;
   onClose: () => void;
+  /** Called with the created bean after successful creation. */
+  onCreated?: (bean: CoffeeBean) => void;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function BeanForm({ bean, onClose }: BeanFormProps) {
+export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
   const isEdit = bean != null;
   const queryClient = useQueryClient();
 
@@ -25,8 +27,9 @@ export default function BeanForm({ bean, onClose }: BeanFormProps) {
   const mutation = useMutation({
     mutationFn: (data: CreateBeanData) =>
       isEdit ? beansApi.update(bean.id, data) : beansApi.create(data),
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['beans'] });
+      onCreated?.(created);
       onClose();
     },
   });
