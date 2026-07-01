@@ -4,10 +4,10 @@ schema: spec-driven
 context: |
   Project: bitacora-dos-legados
   Type: Web app (coffee brewing log / notebook), later mobile
-  Stack: TypeScript, Node.js (Hono/Express), React + Vite, Drizzle ORM, SQLite
-  Architecture: Independent backend + frontend (decoupled)
-  Testing: Not configured (empty project — no test runner detected)
-  Strict TDD: false
+  Stack: TypeScript, Node.js (Hono 4.6), React 18 + Vite 6, Drizzle ORM 0.38, SQLite (better-sqlite3 11.7), Zod 3.24
+  Architecture: Independent backend + frontend (decoupled monorepo)
+  Testing: Vitest 4.1 — 43 tests (23 unit, 17 API integration, 3 service integration)
+  Strict TDD: true
 
 rules:
   proposal:
@@ -32,30 +32,30 @@ rules:
     - Include Review Workload Forecast in task summary
   apply:
     - Follow existing code patterns once the codebase exists
-    tdd: false
-    test_command: ""
+    tdd: true
+    test_command: "cd backend && npx vitest run"
   verify:
-    test_command: ""
-    build_command: "npm run build || npx tsc --noEmit"
+    test_command: "cd backend && npx vitest run"
+    build_command: "cd frontend && npx tsc --noEmit && npx vite build"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
     - Merge delta specs into main spec under openspec/specs/
 
 testing:
-  strict_tdd: false
-  detected: "2026-06-30"
+  strict_tdd: true
+  detected: "2026-07-01"
   runner:
-    command: ""
-    framework: ""
+    command: "cd backend && npx vitest run"
+    framework: "vitest"
   layers:
-    unit: false
-    integration: false
+    unit: true
+    integration: true
     e2e: false
   coverage:
     available: false
     command: ""
   quality:
     linter: false
-    type_checker: false
+    type_checker: true
     formatter: false

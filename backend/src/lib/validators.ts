@@ -1,0 +1,51 @@
+import { z } from 'zod';
+
+// ─── Coffee Beans ───────────────────────────────────────────────────────────
+
+export const createBeanSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  roaster: z.string().min(1, 'Roaster is required'),
+  origin: z.string().nullable().optional(),
+  roastLevel: z.string().nullable().optional(),
+});
+
+export const updateBeanSchema = createBeanSchema.partial();
+
+// ─── Brew Sessions ──────────────────────────────────────────────────────────
+
+export const createBrewSchema = z.object({
+  coffeeBeanId: z.number().int().positive().nullable().optional(),
+  grindSize: z.string().min(1, 'Grind size is required'),
+  waterTemp: z.number().int().positive('Water temperature must be positive'),
+  brewTime: z.number().int().positive('Brew time must be positive'),
+  method: z.string().min(1, 'Method is required'),
+  coffeeDose: z.number().int().positive('Coffee dose must be positive'),
+  waterDose: z.number().int().positive('Water dose must be positive'),
+  notes: z.string().nullable().optional(),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+});
+
+export const updateBrewSchema = createBrewSchema.partial();
+
+// ─── Tasting Notes ──────────────────────────────────────────────────────────
+
+export const createNoteSchema = z.object({
+  aroma: z.string().nullable().optional(),
+  flavor: z.string().nullable().optional(),
+  body: z.string().nullable().optional(),
+  acidity: z.string().nullable().optional(),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+  freeText: z.string().nullable().optional(),
+});
+
+export const updateNoteSchema = createNoteSchema.partial();
+
+// ─── Reusable param schemas ─────────────────────────────────────────────────
+
+export const idParamSchema = z.object({
+  id: z.coerce.number().int().positive('ID must be a positive integer'),
+});
+
+export const brewIdParamSchema = z.object({
+  brewId: z.coerce.number().int().positive('brewId must be a positive integer'),
+});

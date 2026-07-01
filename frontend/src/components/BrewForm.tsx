@@ -1,0 +1,219 @@
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { brewsApi } from '../api/client';
+import BeanSelect from './BeanSelect';
+import type { CreateBrewData } from '../types';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface BrewFormProps {
+  /** When set, the form operates in edit mode (PUT). */
+  brewId?: number;
+  /** Pre-fill values for edit mode. */
+  initialData?: CreateBrewData;
+}
+
+/** Internal string-based form state so empty number fields send '' not 0. */
+interface FormState {
+  method: string;
+  grindSize: string;
+  waterTemp: string;
+  brewTime: string;
+  coffeeDose: string;
+  waterDose: string;
+  coffeeBeanId: string;
+  notes: string;
+  rating: string;
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function createFormState(data?: CreateBrewData): FormState {
+  return {
+    method: data?.method ?? '',
+    grindSize: data?.grindSize ?? '',
+    waterTemp: data?.waterTemp ? String(data.waterTemp) : '',
+    brewTime: data?.brewTime ? String(data.brewTime) : '',
+    coffeeDose: data?.coffeeDose ? String(data.coffeeDose) : '',
+    waterDose: data?.waterDose ? String(data.waterDose) : '',
+    coffeeBeanId: data?.coffeeBeanId ? String(data.coffeeBeanId) : '',
+    notes: data?.notes ?? '',
+    rating: data?.rating ? String(data.rating) : '',
+  };
+}
+
+function toPayload(f: FormState): CreateBrewData {
+  return {
+    method: f.method,
+    grindSize: f.grindSize,
+    waterTemp: Number(f.waterTemp),
+    brewTime: Number(f.brewTime),
+    coffeeDose: Number(f.coffeeDose),
+    waterDose: Number(f.waterDose),
+    coffeeBeanId: f.coffeeBeanId ? Number(f.coffeeBeanId) : null,
+    notes: f.notes || null,
+    rating: f.rating ? Number(f.rating) : null,
+  };
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
+export default function BrewForm({ brewId, initialData }: BrewFormProps) {
+  const isEdit = brewId != null;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [form, setForm] = useState<FormState>(() =>
+    createFormState(initialData),
+  );
+
+  const mutation = useMutation({
+    mutationFn: (data: CreateBrewData) =>
+      isEdit
+        ? brewsApi.update(brewId, data)
+        : brewsApi.create(data),
+    onSuccess: (brew) => {
+      queryClient.invalidateQueries({ queryKey: ['brews'] });
+      navigate(`/brews/${brew.id}`);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(toPayload(form));
+  };
+
+  const set = (field: keyof FormState, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  return (
+    <div>
+      <h2>{isEdit ? 'Edit Brew Session' : 'New Brew Session'}</h2>
+
+      <form onSubmit={handleSubmit} className="form">
+        <label className="field">
+          Method *
+          <input
+            required
+            value={form.method}
+            onChange={(e) => set('method', e.target.value)}
+            placeholder="V60, Aeropress, French Press…"
+            className="input"
+          />
+        </label>
+
+        <label className="field">
+          Grind Size *
+          <input
+            required
+            value={form.grindSize}
+            onChange={(e) => set('grindSize', e.target.value)}
+            placeholder="medium, fine, coarse…"
+            className="input"
+          />
+        </label>
+
+        <div className="field-row">
+          <label className="field">
+            Water Temp (°C) *
+            <input
+              required
+              type="number"
+              min={1}
+              value={form.waterTemp}
+              onChange={(e) => set('waterTemp', e.target.value)}
+              className="input"
+            />
+          </label>
+
+          <label className="field">
+            Brew Time (sec) *
+            <input
+              required
+              type="number"
+              min={1}
+              value={form.brewTime}
+              onChange={(e) => set('brewTime', e.target.value)}
+              className="input"
+            />
+          </label>
+        </div>
+
+        <div className="field-row">
+          <label className="field">
+            Coffee Dose (g) *
+            <input
+              required
+              type="number"
+              min={1}
+              value={form.coffeeDose}
+              onChange={(e) => set('coffeeDose', e.target.value)}
+              className="input"
+            />
+          </label>
+
+          <label className="field">
+            Water Dose (ml) *
+            <input
+              required
+              type="number"
+              min={1}
+              value={form.waterDose}
+              onChange={(e) => set('waterDose', e.target.value)}
+              className="input"
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          Coffee Bean
+          <BeanSelect
+            value={form.coffeeBeanId ? Number(form.coffeeBeanId) : null}
+            onChange={(id) => set('coffeeBeanId', id ? String(id) : '')}
+          />
+        </label>
+
+        <label className="field">
+          Rating (1–5)
+          <select
+            value={form.rating}
+            onChange={(e) => set('rating', e.target.value)}
+            className="input"
+          >
+            <option value="">—</option>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field">
+          Notes
+          <textarea
+            value={form.notes}
+            onChange={(e) => set('notes', e.target.value)}
+            rows={3}
+            className="input"
+          />
+        </label>
+
+        {mutation.isError && (
+          <div className="state-error">
+            {(mutation.error as Error).message}
+          </div>
+        )}
+
+        <button type="submit" disabled={mutation.isPending} className="btn">
+          {mutation.isPending
+            ? 'Saving…'
+            : isEdit
+              ? 'Update Brew'
+              : 'Save Brew'}
+        </button>
+      </form>
+    </div>
+  );
+}
