@@ -37,12 +37,14 @@ export default function BrewEdit() {
     method: brew.method,
     grindSize: brew.grindSize ?? '',
     waterTemp: brew.waterTemp ?? 0,
-    brewTime: brew.brewTime ?? 0,
+    brewTime: String(brew.brewTime ?? ''),
     coffeeDose: brew.coffeeDose ?? 0,
     waterDose: brew.waterDose ?? 0,
     coffeeBeanId: brew.coffeeBeanId,
     notes: brew.notes ?? '',
-    rating: brew.rating,
+    rating: brew.rating ?? '',
+    grinder: brew.grinder ?? '',
+    clicks: brew.clicks ?? '',
   };
 
   return (
