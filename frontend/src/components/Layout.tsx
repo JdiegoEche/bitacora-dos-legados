@@ -14,8 +14,6 @@ export default function Layout() {
 
           <div className="nav-links">
             <Link to="/bitacora" className="nav-link">Bitácora</Link>
-            <Link to="/brews/new" className="nav-link">New Brew</Link>
-            <Link to="/beans" className="nav-link">Beans</Link>
           </div>
 
           <button

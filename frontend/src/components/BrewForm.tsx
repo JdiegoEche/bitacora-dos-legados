@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { brewsApi } from '../api/client';
-import BeanSelect from './BeanSelect';
+import { brewsApi, beansApi } from '../api/client';
 import type { CreateBrewData } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -12,6 +11,8 @@ interface BrewFormProps {
   brewId?: number;
   /** Pre-fill values for edit mode. */
   initialData?: CreateBrewData;
+  /** When set, bean selector is hidden and coffeeBeanId is auto-assigned. */
+  preSelectedBeanId?: number;
 }
 
 /** Internal string-based form state so empty number fields send '' not 0. */
@@ -20,6 +21,8 @@ interface FormState {
   grindSize: string;
   waterTemp: string;
   brewTime: string;
+  grinder: string;
+  clicks: string;
   coffeeDose: string;
   waterDose: string;
   coffeeBeanId: string;
@@ -35,6 +38,8 @@ function createFormState(data?: CreateBrewData): FormState {
     grindSize: data?.grindSize ?? '',
     waterTemp: data?.waterTemp ? String(data.waterTemp) : '',
     brewTime: data?.brewTime ? String(data.brewTime) : '',
+    grinder: data?.grinder ?? '',
+    clicks: data?.clicks ?? '',
     coffeeDose: data?.coffeeDose ? String(data.coffeeDose) : '',
     waterDose: data?.waterDose ? String(data.waterDose) : '',
     coffeeBeanId: data?.coffeeBeanId ? String(data.coffeeBeanId) : '',
@@ -43,26 +48,35 @@ function createFormState(data?: CreateBrewData): FormState {
   };
 }
 
-function toPayload(f: FormState): CreateBrewData {
+function toPayload(f: FormState, preSelectedBeanId?: number): CreateBrewData {
   return {
     method: f.method,
     grindSize: f.grindSize,
     waterTemp: Number(f.waterTemp),
-    brewTime: Number(f.brewTime),
+    brewTime: String(f.brewTime),
+    grinder: f.grinder || null,
+    clicks: f.clicks || null,
     coffeeDose: Number(f.coffeeDose),
     waterDose: Number(f.waterDose),
-    coffeeBeanId: f.coffeeBeanId ? Number(f.coffeeBeanId) : null,
+    coffeeBeanId: preSelectedBeanId ?? (f.coffeeBeanId ? Number(f.coffeeBeanId) : null),
     notes: f.notes || null,
-    rating: f.rating ? Number(f.rating) : null,
+    rating: f.rating || null,
   };
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function BrewForm({ brewId, initialData }: BrewFormProps) {
+export default function BrewForm({ brewId, initialData, preSelectedBeanId }: BrewFormProps) {
   const isEdit = brewId != null;
+  const hasPreselected = preSelectedBeanId != null;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: beans } = useQuery({
+    queryKey: ['beans'],
+    queryFn: beansApi.list,
+    enabled: !hasPreselected,
+  });
 
   const [form, setForm] = useState<FormState>(() =>
     createFormState(initialData),
@@ -74,14 +88,19 @@ export default function BrewForm({ brewId, initialData }: BrewFormProps) {
         ? brewsApi.update(brewId, data)
         : brewsApi.create(data),
     onSuccess: (brew) => {
-      queryClient.invalidateQueries({ queryKey: ['brews'] });
-      navigate(`/brews/${brew.id}`);
+      if (hasPreselected) {
+        queryClient.invalidateQueries({ queryKey: ['bean-brews', preSelectedBeanId] });
+        navigate(`/bitacora/${preSelectedBeanId}`);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['brews'] });
+        navigate(`/brews/${brew.id}`);
+      }
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate(toPayload(form));
+    mutation.mutate(toPayload(form, preSelectedBeanId));
   };
 
   const set = (field: keyof FormState, value: string) =>
@@ -128,13 +147,34 @@ export default function BrewForm({ brewId, initialData }: BrewFormProps) {
           </label>
 
           <label className="field">
-            Brew Time (sec) *
+            Brew Time *
             <input
               required
-              type="number"
-              min={1}
+              type="text"
               value={form.brewTime}
               onChange={(e) => set('brewTime', e.target.value)}
+              className="input"
+            />
+          </label>
+        </div>
+
+        <div className="field-row">
+          <label className="field">
+            Molino
+            <input
+              value={form.grinder}
+              onChange={(e) => set('grinder', e.target.value)}
+              placeholder="Eureka Mignon, Comandante…"
+              className="input"
+            />
+          </label>
+
+          <label className="field">
+            Clicks
+            <input
+              value={form.clicks}
+              onChange={(e) => set('clicks', e.target.value)}
+              placeholder="15, 22, 30…"
               className="input"
             />
           </label>
@@ -166,28 +206,33 @@ export default function BrewForm({ brewId, initialData }: BrewFormProps) {
           </label>
         </div>
 
-        <label className="field">
-          Coffee Bean
-          <BeanSelect
-            value={form.coffeeBeanId ? Number(form.coffeeBeanId) : null}
-            onChange={(id) => set('coffeeBeanId', id ? String(id) : '')}
-          />
-        </label>
+        {!hasPreselected && (
+          <label className="field">
+            Coffee Bean
+            <select
+              value={form.coffeeBeanId}
+              onChange={(e) => set('coffeeBeanId', e.target.value)}
+              className="input"
+            >
+              <option value="">-- Select bean --</option>
+              {beans?.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.roaster})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <label className="field">
-          Rating (1–5)
-          <select
+          Rating
+          <input
+            type="text"
             value={form.rating}
             onChange={(e) => set('rating', e.target.value)}
             className="input"
-          >
-            <option value="">—</option>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+            placeholder="1:15"
+          />
         </label>
 
         <label className="field">
