@@ -41,6 +41,8 @@ beforeAll(async () => {
       water_dose INTEGER,
       notes TEXT,
       rating INTEGER,
+      grinder TEXT,
+      clicks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );

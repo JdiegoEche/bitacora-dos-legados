@@ -11,12 +11,22 @@ beanRouter.get('/', async (c) => {
   return c.json(beans);
 });
 
-// GET /api/beans/:id — get single bean
+// GET /api/beans/:id — get single bean with aggregate stats
 beanRouter.get('/:id', zValidator('param', idParamSchema), async (c) => {
+  const { id } = c.req.valid('param');
+  const bean = await beanService.getByIdWithStats(id);
+  if (!bean) return c.json({ error: 'Coffee bean not found' }, 404);
+  return c.json(bean);
+});
+
+// GET /api/beans/:id/brews — get brew history for a bean, newest-first with tasting notes summary
+beanRouter.get('/:id/brews', zValidator('param', idParamSchema), async (c) => {
   const { id } = c.req.valid('param');
   const bean = await beanService.getById(id);
   if (!bean) return c.json({ error: 'Coffee bean not found' }, 404);
-  return c.json(bean);
+
+  const brews = await beanService.getBrewsByBeanId(id);
+  return c.json(brews);
 });
 
 // POST /api/beans — create a new bean

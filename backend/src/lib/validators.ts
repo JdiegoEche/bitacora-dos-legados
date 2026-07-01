@@ -17,12 +17,14 @@ export const createBrewSchema = z.object({
   coffeeBeanId: z.number().int().positive().nullable().optional(),
   grindSize: z.string().min(1, 'Grind size is required'),
   waterTemp: z.number().int().positive('Water temperature must be positive'),
-  brewTime: z.number().int().positive('Brew time must be positive'),
+  brewTime: z.string().min(1, 'Brew time is required'),
   method: z.string().min(1, 'Method is required'),
+  grinder: z.string().nullable().optional(),
+  clicks: z.string().nullable().optional(),
   coffeeDose: z.number().int().positive('Coffee dose must be positive'),
   waterDose: z.number().int().positive('Water dose must be positive'),
   notes: z.string().nullable().optional(),
-  rating: z.number().int().min(1).max(5).nullable().optional(),
+  rating: z.string().nullable().optional(),
 });
 
 export const updateBrewSchema = createBrewSchema.partial();

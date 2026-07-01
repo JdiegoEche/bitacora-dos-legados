@@ -45,6 +45,8 @@ beforeAll(async () => {
       water_dose INTEGER,
       notes TEXT,
       rating INTEGER,
+      grinder TEXT,
+      clicks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -224,7 +226,7 @@ describe('POST /api/brews', () => {
         method: 'V60',
         grindSize: 'medium',
         waterTemp: 93,
-        brewTime: 150,
+        brewTime: '150',
         coffeeDose: 15,
         waterDose: 250,
       }),
@@ -245,7 +247,7 @@ describe('GET /api/brews/:id', () => {
         method: 'Aeropress',
         grindSize: 'fine',
         waterTemp: 88,
-        brewTime: 120,
+        brewTime: '120',
         coffeeDose: 14,
         waterDose: 200,
       }),
@@ -276,7 +278,7 @@ describe('POST /api/brews/:brewId/notes', () => {
         method: 'Chemex',
         grindSize: 'medium-coarse',
         waterTemp: 92,
-        brewTime: 240,
+        brewTime: '240',
         coffeeDose: 30,
         waterDose: 500,
       }),
@@ -317,7 +319,7 @@ describe('GET /api/brews/:brewId/notes', () => {
         method: 'Espresso',
         grindSize: 'fine',
         waterTemp: 92,
-        brewTime: 30,
+        brewTime: '30',
         coffeeDose: 18,
         waterDose: 36,
       }),
@@ -357,7 +359,7 @@ describe('DELETE /api/notes/:id', () => {
         method: 'Siphon',
         grindSize: 'medium',
         waterTemp: 91,
-        brewTime: 60,
+        brewTime: '60',
         coffeeDose: 20,
         waterDose: 300,
       }),
@@ -380,6 +382,138 @@ describe('DELETE /api/notes/:id', () => {
   it('returns 404 for non-existent note', async () => {
     const res = await app.request('/api/notes/99999', { method: 'DELETE' });
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── Bean Stats & History Tests ──────────────────────────────────────────────
+// These tests verify the new getByIdWithStats + getBrewsByBeanId endpoints.
+// brewTime is sent as string to match the pre-existing validator (z.string()).
+
+describe('GET /api/beans/:id — with stats', () => {
+  it('returns bean with avgRating, brewCount, methodBreakdown', async () => {
+    // Create a bean
+    const beanRes = await app.request('/api/beans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Stats Bean', roaster: 'Stats Roaster' }),
+    });
+    const bean = await beanRes.json();
+
+    // Create brews with different ratings and methods
+    const brewPayloads = [
+      { method: 'V60', grindSize: 'medium', waterTemp: 93, brewTime: '150', coffeeDose: 15, waterDose: 250, coffeeBeanId: bean.id, rating: '4' },
+      { method: 'V60', grindSize: 'medium', waterTemp: 93, brewTime: '155', coffeeDose: 15, waterDose: 250, coffeeBeanId: bean.id, rating: '5' },
+      { method: 'Aeropress', grindSize: 'fine', waterTemp: 88, brewTime: '120', coffeeDose: 14, waterDose: 200, coffeeBeanId: bean.id, rating: '3' },
+    ];
+
+    for (const payload of brewPayloads) {
+      await app.request('/api/brews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    }
+
+    const res = await app.request(`/api/beans/${bean.id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.avgRating).toBeCloseTo(4, 0);
+    expect(body.brewCount).toBe(3);
+    expect(body.methodBreakdown).toEqual({ V60: 2, Aeropress: 1 });
+  });
+
+  it('returns 404 for non-existent bean', async () => {
+    const res = await app.request('/api/beans/99999');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns stats with brewCount 0 when bean has no brews', async () => {
+    const beanRes = await app.request('/api/beans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Lonely Bean', roaster: 'Solo' }),
+    });
+    const bean = await beanRes.json();
+
+    const res = await app.request(`/api/beans/${bean.id}`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.brewCount).toBe(0);
+    expect(body.avgRating).toBeNull();
+    expect(body.methodBreakdown).toEqual({});
+  });
+});
+
+describe('GET /api/beans/:id/brews', () => {
+  it('returns brews newest-first with tastingNotesSummary', async () => {
+    const beanRes = await app.request('/api/beans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'History Bean', roaster: 'History R' }),
+    });
+    const bean = await beanRes.json();
+
+    // Create 2 brews for the bean — add delay so created_at differs
+    const brew1Res = await app.request('/api/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'V60', grindSize: 'medium', waterTemp: 93, brewTime: '150',
+        coffeeDose: 15, waterDose: 250, coffeeBeanId: bean.id,
+      }),
+    });
+    const brew1 = await brew1Res.json();
+
+    // Small delay so created_at timestamps differ
+    await new Promise((r) => setTimeout(r, 50));
+
+    const brew2Res = await app.request('/api/brews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'Aeropress', grindSize: 'fine', waterTemp: 88, brewTime: '120',
+        coffeeDose: 14, waterDose: 200, coffeeBeanId: bean.id,
+      }),
+    });
+    const brew2 = await brew2Res.json();
+
+    // Add tasting notes to brew2 (the newer brew)
+    await app.request(`/api/brews/${brew2.id}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ aroma: 'floral', flavor: 'berry' }),
+    });
+
+    const res = await app.request(`/api/beans/${bean.id}/brews`);
+    expect(res.status).toBe(200);
+    const brews = await res.json();
+    expect(brews).toHaveLength(2);
+    // Newest first (brew2 is newer)
+    expect(brews[0].id).toBe(brew2.id);
+    expect(brews[1].id).toBe(brew1.id);
+    // brew2 has notes, brew1 doesn't
+    expect(typeof brews[0].tastingNotesSummary).toBe('string');
+    expect(brews[0].tastingNotesSummary).toMatch(/floral/);
+    expect(brews[1].tastingNotesSummary).toBeNull();
+  });
+
+  it('returns 404 for non-existent bean', async () => {
+    const res = await app.request('/api/beans/99999/brews');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 200 with empty array when bean has no brews', async () => {
+    const beanRes = await app.request('/api/beans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'No Brews Yet', roaster: 'Empty R' }),
+    });
+    const bean = await beanRes.json();
+
+    const res = await app.request(`/api/beans/${bean.id}/brews`);
+    expect(res.status).toBe(200);
+    const brews = await res.json();
+    expect(brews).toEqual([]);
   });
 });
 

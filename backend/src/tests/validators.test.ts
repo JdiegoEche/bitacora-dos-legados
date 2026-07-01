@@ -92,7 +92,7 @@ describe('createBrewSchema', () => {
     method: 'V60',
     grindSize: 'medium',
     waterTemp: 93,
-    brewTime: 150,
+    brewTime: '150',
     coffeeDose: 15,
     waterDose: 250,
   };
@@ -134,7 +134,7 @@ describe('createBrewSchema', () => {
 
 describe('updateBrewSchema', () => {
   it('accepts partial payload', () => {
-    const result = updateBrewSchema.safeParse({ rating: 5 });
+    const result = updateBrewSchema.safeParse({ rating: '5' });
     expect(result.success).toBe(true);
   });
 });

@@ -23,3 +23,13 @@ export type BrewSessionDetail = BrewSession & {
 export type CoffeeBeanWithBrews = CoffeeBean & {
   brewSessions: BrewSession[];
 };
+
+export type CoffeeBeanWithStats = CoffeeBean & {
+  avgRating: number | null;
+  brewCount: number;
+  methodBreakdown: Record<string, number>;
+};
+
+export type BrewSessionWithNotes = BrewSession & {
+  tastingNotesSummary: string | null;
+};

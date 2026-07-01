@@ -29,10 +29,12 @@ export const brewSessions = sqliteTable('brew_sessions', {
   waterTemp: integer('water_temp'), // Celsius
   brewTime: integer('brew_time'), // seconds
   method: text('method').notNull(), // e.g. "V60", "Aeropress"
+  grinder: text('grinder'), // grinder model/type
+  clicks: text('clicks'), // grinder setting in clicks
   coffeeDose: integer('coffee_dose'), // grams
   waterDose: integer('water_dose'), // ml
   notes: text('notes'),
-  rating: integer('rating'), // 1–5
+  rating: text('rating'), // free text
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
