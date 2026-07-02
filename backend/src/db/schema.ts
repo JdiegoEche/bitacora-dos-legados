@@ -62,6 +62,26 @@ export const tastingNotes = sqliteTable('tasting_notes', {
     .$defaultFn(() => new Date().toISOString()),
 });
 
+// ─── Recipe Catalog ──────────────────────────────────────────────────────────
+
+export const recipes = sqliteTable('recipes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  method: text('method').notNull(),
+  name: text('name').notNull(),
+  objective: text('objective'),
+  coffeeDose: integer('coffee_dose').notNull(),
+  waterDose: integer('water_dose').notNull(),
+  ratio: text('ratio').notNull(),
+  temperature: text('temperature').notNull(),
+  grindSize: text('grind_size').notNull(),
+  totalTime: text('total_time').notNull(),
+  profile: text('profile').notNull(),
+  steps: text('steps').notNull().$default(() => '[]'),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const coffeeBeansRelations = relations(coffeeBeans, ({ many }) => ({

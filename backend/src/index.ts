@@ -6,6 +6,7 @@ import { Hono } from 'hono';
 import brewRouter from './routes/brews';
 import beanRouter from './routes/beans';
 import noteRouter from './routes/notes';
+import recipeRouter from './routes/recipes';
 
 const app = new Hono();
 
@@ -18,6 +19,7 @@ app.use('/api/*', cors());
 app.route('/api/brews', brewRouter);
 app.route('/api/beans', beanRouter);
 app.route('/api', noteRouter);
+app.route('/api/recipes', recipeRouter);
 
 // ─── Static frontend (production only) ──────────────────────────────────────
 

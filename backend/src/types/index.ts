@@ -33,3 +33,18 @@ export type CoffeeBeanWithStats = CoffeeBean & {
 export type BrewSessionWithNotes = BrewSession & {
   tastingNotesSummary: string | null;
 };
+
+// ─── Recipe Catalog ──────────────────────────────────────────────────────────
+
+export type Recipe = InferSelectModel<typeof recipes>;
+export type CreateRecipe = InferInsertModel<typeof recipes>;
+
+export interface RecipeStep {
+  stepOrder: number;
+  instruction: string;
+  waterAtStep?: number;
+}
+
+export interface RecipeDetail extends Recipe {
+  steps: RecipeStep[];
+}

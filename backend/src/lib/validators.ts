@@ -51,3 +51,23 @@ export const idParamSchema = z.object({
 export const brewIdParamSchema = z.object({
   brewId: z.coerce.number().int().positive('brewId must be a positive integer'),
 });
+
+// ─── Recipe Catalog ─────────────────────────────────────────────────────────
+
+const recipeMethods = ['v60', 'aeropress', 'chemex', 'kalitawave', 'origami', 'switch'] as const;
+
+export const recipeQuerySchema = z.object({
+  method: z.enum(recipeMethods).optional(),
+});
+
+export const recipeIdParamSchema = z.object({
+  id: z.coerce.number().int().positive('ID must be a positive integer'),
+});
+
+export const recipeStepSchema = z.object({
+  stepOrder: z.number().int().positive(),
+  instruction: z.string().min(1),
+  waterAtStep: z.number().int().positive().optional(),
+});
+
+export const recipeStepsSchema = z.array(recipeStepSchema);
