@@ -9,39 +9,56 @@ function formatDose(g: number): string {
   return `${g}g`;
 }
 
-function formatWater(ml: number): string {
-  return `${ml}ml`;
+function formatWater(g: number): string {
+  return `${g}gr`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────
 
 function ParamGrid({ recipe }: { recipe: RecipeDetailType }) {
+  const hasAnyParam = recipe.coffeeDose > 0 || recipe.waterDose > 0 || recipe.ratio ||
+    recipe.temperature || recipe.grindSize || recipe.totalTime;
+
+  if (!hasAnyParam) return null;
+
   return (
     <div className="detail-grid">
-      <div className="detail-field">
-        <span className="detail-label">Café</span>
-        <span className="detail-value">{formatDose(recipe.coffeeDose)}</span>
-      </div>
-      <div className="detail-field">
-        <span className="detail-label">Agua</span>
-        <span className="detail-value">{formatWater(recipe.waterDose)}</span>
-      </div>
-      <div className="detail-field">
-        <span className="detail-label">Ratio</span>
-        <span className="detail-value">{recipe.ratio}</span>
-      </div>
-      <div className="detail-field">
-        <span className="detail-label">Temperatura</span>
-        <span className="detail-value">{recipe.temperature}</span>
-      </div>
-      <div className="detail-field">
-        <span className="detail-label">Molienda</span>
-        <span className="detail-value">{recipe.grindSize}</span>
-      </div>
-      <div className="detail-field">
-        <span className="detail-label">Tiempo total</span>
-        <span className="detail-value">{recipe.totalTime}</span>
-      </div>
+      {recipe.coffeeDose > 0 && (
+        <div className="detail-field">
+          <span className="detail-label">Café</span>
+          <span className="detail-value">{formatDose(recipe.coffeeDose)}</span>
+        </div>
+      )}
+      {recipe.waterDose > 0 && (
+        <div className="detail-field">
+          <span className="detail-label">Agua</span>
+          <span className="detail-value">{formatWater(recipe.waterDose)}</span>
+        </div>
+      )}
+      {recipe.ratio && (
+        <div className="detail-field">
+          <span className="detail-label">Ratio</span>
+          <span className="detail-value">{recipe.ratio}</span>
+        </div>
+      )}
+      {recipe.temperature && (
+        <div className="detail-field">
+          <span className="detail-label">Temperatura</span>
+          <span className="detail-value">{recipe.temperature}</span>
+        </div>
+      )}
+      {recipe.grindSize && (
+        <div className="detail-field">
+          <span className="detail-label">Molienda</span>
+          <span className="detail-value">{recipe.grindSize}</span>
+        </div>
+      )}
+      {recipe.totalTime && (
+        <div className="detail-field">
+          <span className="detail-label">Tiempo total</span>
+          <span className="detail-value">{recipe.totalTime}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -128,12 +145,21 @@ export default function RecipeDetail() {
         </Link>
       </div>
 
+      {recipe.preparation && (
+        <div className="recipe-preparation">
+          <h3>Preparación</h3>
+          <p>{recipe.preparation}</p>
+        </div>
+      )}
+
       <ParamGrid recipe={recipe} />
 
-      <div className="recipe-profile">
-        <h3>Perfil</h3>
-        <p>{recipe.profile}</p>
-      </div>
+      {recipe.profile && (
+        <div className="recipe-profile">
+          <h3>Perfil</h3>
+          <p>{recipe.profile}</p>
+        </div>
+      )}
 
       <StepsTimeline steps={recipe.steps} />
     </div>

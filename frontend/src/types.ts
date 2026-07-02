@@ -97,6 +97,7 @@ export interface Recipe {
   method: string;
   name: string;
   objective: string | null;
+  preparation: string | null;
   coffeeDose: number;
   waterDose: number;
   ratio: string;

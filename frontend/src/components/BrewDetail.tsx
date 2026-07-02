@@ -87,7 +87,7 @@ export default function BrewDetail() {
         <Field label="Water Temp" value={brew.waterTemp ? `${brew.waterTemp}°C` : '—'} />
         <Field label="Brew Time" value={brew.brewTime ? `${brew.brewTime}s` : '—'} />
         <Field label="Coffee Dose" value={brew.coffeeDose ? `${brew.coffeeDose}g` : '—'} />
-        <Field label="Water Dose" value={brew.waterDose ? `${brew.waterDose}ml` : '—'} />
+        <Field label="Water Dose" value={brew.waterDose ? `${brew.waterDose}g` : '—'} />
         <Field label="Rating" value={stars(brew.rating)} />
 
         {brew.coffeeBean && (

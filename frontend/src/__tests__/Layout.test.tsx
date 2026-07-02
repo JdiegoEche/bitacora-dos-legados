@@ -1,7 +1,7 @@
 /**
  * Layout — Tests for the Layout component
  *
- * Tests: nav bar rendering, logo link, nav links (Bitácora, New Brew, Beans),
+ * Tests: nav bar rendering, logo link, nav links (Bitácora, Recetas),
  * dark mode toggle button, footer, Outlet wrapper, responsive structure.
  *
  * NOTE: Requires vitest + @testing-library/react + happy-dom/jsdom.
@@ -47,25 +47,24 @@ describe('Layout — nav bar', () => {
     expect(logo).toHaveAttribute('href', '/');
   });
 
-  it('renders Bitácora link pointing to /bitacora', () => {
+  it('renders Bitácora nav link pointing to /bitacora', () => {
     renderWithProviders(<Layout />);
-    const link = screen.getByRole('link', { name: /bitácora/i });
+    const link = screen.getByRole('link', { name: 'Bitácora' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/bitacora');
   });
 
-  it('renders New Brew link pointing to /brews/new', () => {
+  it('renders Recetas nav link pointing to /recetas', () => {
     renderWithProviders(<Layout />);
-    const link = screen.getByRole('link', { name: /new brew/i });
+    const link = screen.getByRole('link', { name: 'Recetas' });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/brews/new');
+    expect(link).toHaveAttribute('href', '/recetas');
   });
 
-  it('renders Beans link pointing to /beans', () => {
+  it('renders exactly three navigation links (logo + nav links)', () => {
     renderWithProviders(<Layout />);
-    const link = screen.getByRole('link', { name: /beans/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/beans');
+    const links = screen.getAllByRole('link');
+    expect(links).toHaveLength(3);
   });
 
   it('renders dark mode toggle button with aria-label', () => {
@@ -94,7 +93,12 @@ describe('Layout — nav bar', () => {
 describe('Layout — footer', () => {
   it('renders footer with brand name', () => {
     renderWithProviders(<Layout />);
-    expect(screen.getByText(/bitácora café/i)).toBeInTheDocument();
+    // Brand name appears in both the logo and the footer
+    const brandTexts = screen.getAllByText(/bitácora café/i);
+    expect(brandTexts.length).toBeGreaterThanOrEqual(2);
+    // Footer is the last occurrence
+    const footerBrand = brandTexts[brandTexts.length - 1];
+    expect(footerBrand.closest('.footer')).toBeInTheDocument();
   });
 });
 

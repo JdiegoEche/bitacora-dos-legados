@@ -14,6 +14,7 @@ export interface ParsedStep {
 export interface ParsedRecipe {
   name: string;
   objective: string;
+  preparation: string;
   coffeeDose: number;
   waterDose: number;
   ratio: string;
@@ -83,9 +84,9 @@ const PARAM_MAP: Record<string, string> = {
 /**
  * Extracts the first number from a string, handling ranges like "15–18 g".
  */
-function extractFirstInt(value: string): number {
-  const match = value.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : 0;
+function extractFirstNum(value: string): number {
+  const match = value.match(/(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
 }
 
 /**
@@ -217,9 +218,9 @@ export function parseRecipesFromMarkdown(
         : fileContent.length;
     const content = fileContent.slice(start, end).trim();
 
-    // Skip "FIN DEL MÉTODO" sections (end markers)
+    // Skip "FIN DEL MÉTODO" and "Otras recetas" sections
     const lowerName = headingMatches[i].name.toLowerCase();
-    if (lowerName.startsWith('fin ')) continue;
+    if (lowerName.startsWith('fin ') || lowerName.startsWith('otra')) continue;
 
     sections.push({ name: headingMatches[i].name, content });
   }
@@ -258,6 +259,15 @@ export function parseRecipesFromMarkdown(
       }
     }
 
+    // ── Extract preparation ─────────────────────────────────────────────
+    let preparation = '';
+    for (const [key, val] of Object.entries(subSections)) {
+      if (key === 'preparación' || key === 'preparacion') {
+        preparation = val.trim();
+        break;
+      }
+    }
+
     // ── Extract parameters ──────────────────────────────────────────────
     let paramsSection = '';
     for (const [key, val] of Object.entries(subSections)) {
@@ -284,8 +294,9 @@ export function parseRecipesFromMarkdown(
     recipes.push({
       name,
       objective,
-      coffeeDose: params.coffeeDose ? extractFirstInt(params.coffeeDose) : 0,
-      waterDose: params.waterDose ? extractFirstInt(params.waterDose) : 0,
+      preparation,
+      coffeeDose: params.coffeeDose ? extractFirstNum(params.coffeeDose) : 0,
+      waterDose: params.waterDose ? extractFirstNum(params.waterDose) : 0,
       ratio: params.ratio ?? '',
       temperature: params.temperature ?? '',
       grindSize: params.grindSize ?? '',

@@ -1,5 +1,5 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { coffeeBeans, brewSessions, tastingNotes } from '../db/schema';
+import { coffeeBeans, brewSessions, tastingNotes, recipes } from '../db/schema';
 
 // ─── Select types (what comes out of the DB) ───────────────────────────────
 

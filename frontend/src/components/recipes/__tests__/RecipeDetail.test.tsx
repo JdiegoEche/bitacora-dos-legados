@@ -66,7 +66,7 @@ describe('RecipeDetail', () => {
     });
 
     expect(screen.getByText('15g')).toBeInTheDocument();
-    expect(screen.getByText('250ml')).toBeInTheDocument();
+    expect(screen.getByText('250gr')).toBeInTheDocument();
     expect(screen.getByText('1:16.7')).toBeInTheDocument();
     expect(screen.getByText('96 °C')).toBeInTheDocument();
     expect(screen.getByText('Medium-fine')).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('RecipeDetail', () => {
     expect(screen.getByText('Pour remaining water in circles')).toBeInTheDocument();
 
     // Step 3 has water at step
-    expect(screen.getByText('50ml')).toBeInTheDocument();
+    expect(screen.getByText('50gr')).toBeInTheDocument();
   });
 
   it('renders back link to /recetas/:method', async () => {

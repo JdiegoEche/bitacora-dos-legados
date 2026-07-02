@@ -920,6 +920,41 @@ a.cta-card {
   color: var(--color-muted-fg);
 }
 
+.recipe-card-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.recipe-param {
+  white-space: nowrap;
+}
+
+/* ─── Recipe Preparation ──────────────────────────────────────────────── */
+
+.recipe-preparation {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.recipe-preparation h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-fg);
+  margin: 0 0 0.5rem;
+}
+
+.recipe-preparation p {
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* ─── Recipe Detail ────────────────────────────────────────────────────── */
 
 .recipe-detail {

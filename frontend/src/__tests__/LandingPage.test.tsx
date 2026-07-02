@@ -6,9 +6,8 @@
  * Recetas/Diario placeholder cards showing "Próximamente",
  * responsive grid layout.
  *
- * NOTE: Requires vitest + @testing-library/react + happy-dom/jsdom.
- * Not yet installed in the frontend. When available, run:
- *   npx vitest run frontend/src/__tests__/LandingPage.test.tsx
+ * NOTE: Recetas and Diario are both placeholders with "Próximamente" badge,
+ * so getAllByText is used for that text.
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -63,7 +62,9 @@ describe('LandingPage — CTA cards', () => {
 
   it('Recetas card shows "Próximamente" indicator and is not a link', () => {
     renderWithRouter();
-    const recetasBadge = screen.getByText(/próximamente/i);
+    const badges = screen.getAllByText(/próximamente/i);
+    // First badge belongs to Recetas, second to Diario
+    const recetasBadge = badges[0];
     expect(recetasBadge).toBeInTheDocument();
     // The Recetas card should not be wrapped in an anchor
     const recetasCard = recetasBadge.closest('.cta-card');

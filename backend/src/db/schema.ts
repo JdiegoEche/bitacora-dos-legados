@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // ─── Coffee Beans ───────────────────────────────────────────────────────────
@@ -31,8 +31,8 @@ export const brewSessions = sqliteTable('brew_sessions', {
   method: text('method').notNull(), // e.g. "V60", "Aeropress"
   grinder: text('grinder'), // grinder model/type
   clicks: text('clicks'), // grinder setting in clicks
-  coffeeDose: integer('coffee_dose'), // grams
-  waterDose: integer('water_dose'), // ml
+  coffeeDose: real('coffee_dose'), // grams
+  waterDose: real('water_dose'), // grams
   notes: text('notes'),
   rating: text('rating'), // free text
   createdAt: text('created_at')
@@ -69,8 +69,9 @@ export const recipes = sqliteTable('recipes', {
   method: text('method').notNull(),
   name: text('name').notNull(),
   objective: text('objective'),
-  coffeeDose: integer('coffee_dose').notNull(),
-  waterDose: integer('water_dose').notNull(),
+  preparation: text('preparation').notNull().$default(() => ''),
+  coffeeDose: real('coffee_dose').notNull(),
+  waterDose: real('water_dose').notNull(),
   ratio: text('ratio').notNull(),
   temperature: text('temperature').notNull(),
   grindSize: text('grind_size').notNull(),

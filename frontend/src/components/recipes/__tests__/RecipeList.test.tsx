@@ -62,7 +62,7 @@ describe('RecipeList', () => {
     expect(screen.getByText('James Hoffmann V60')).toBeInTheDocument();
     // Both recipes have 15g/250ml/1:16.7 — use getAllByText
     expect(screen.getAllByText('15g')).toHaveLength(2);
-    expect(screen.getAllByText('250ml')).toHaveLength(2);
+    expect(screen.getAllByText('250gr')).toHaveLength(2);
     expect(screen.getAllByText('1:16.7')).toHaveLength(2);
     // Unique values per recipe
     expect(screen.getByText('96 °C')).toBeInTheDocument();

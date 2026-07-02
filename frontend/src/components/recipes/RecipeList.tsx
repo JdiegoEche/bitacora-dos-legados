@@ -10,8 +10,8 @@ function formatDose(g: number): string {
   return `${g}g`;
 }
 
-function formatWater(ml: number): string {
-  return `${ml}ml`;
+function formatWater(g: number): string {
+  return `${g}gr`;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -77,24 +77,27 @@ export default function RecipeList() {
               <p className="recipe-card-objective">{recipe.objective}</p>
             )}
             <div className="recipe-card-params">
-              <span className="recipe-param">
-                <strong>Café:</strong> {formatDose(recipe.coffeeDose)}
-              </span>
-              <span className="recipe-param">
-                <strong>Agua:</strong> {formatWater(recipe.waterDose)}
-              </span>
-              <span className="recipe-param">
-                <strong>Ratio:</strong> {recipe.ratio}
-              </span>
-              <span className="recipe-param">
-                <strong>Temp:</strong> {recipe.temperature}
-              </span>
-              <span className="recipe-param">
-                <strong>Tiempo:</strong> {recipe.totalTime}
-              </span>
-              <span className="recipe-param">
-                <strong>Perfil:</strong> {recipe.profile}
-              </span>
+              {recipe.coffeeDose > 0 && (
+                <span className="recipe-param"><strong>Café:</strong> {formatDose(recipe.coffeeDose)}</span>
+              )}
+              {recipe.waterDose > 0 && (
+                <span className="recipe-param"><strong>Agua:</strong> {formatWater(recipe.waterDose)}</span>
+              )}
+              {recipe.ratio && (
+                <span className="recipe-param"><strong>Ratio:</strong> {recipe.ratio}</span>
+              )}
+              {recipe.temperature && (
+                <span className="recipe-param"><strong>Temp:</strong> {recipe.temperature}</span>
+              )}
+              {recipe.grindSize && (
+                <span className="recipe-param"><strong>Molienda:</strong> {recipe.grindSize}</span>
+              )}
+              {recipe.totalTime && (
+                <span className="recipe-param"><strong>Tiempo:</strong> {recipe.totalTime}</span>
+              )}
+              {recipe.profile && (
+                <span className="recipe-param"><strong>Perfil:</strong> {recipe.profile}</span>
+              )}
             </div>
           </Link>
         ))}

@@ -165,14 +165,15 @@ describe('parseRecipesFromMarkdown', () => {
   it('extracts steps from preparation sections', () => {
     const recipes = parseRecipesFromMarkdown(v60Sample, 'v60');
     const r1 = recipes[0];
-    expect(r1.steps.length).toBeGreaterThanOrEqual(4); // Bloom, Vertido 1, Vertido 2, Finalización
+    // Original steps: Bloom, Vertido 1, Vertido 2, Finalización (Preparación
+    // is extracted as the `preparation` field, not as a step)
+    expect(r1.steps.length).toBeGreaterThanOrEqual(4);
     expect(r1.steps[0].stepOrder).toBe(1);
+    // First step is Bloom
     expect(r1.steps[0].instruction).toContain('Bloom');
-    // The first step should include the Bloom section content
     expect(r1.steps[0].instruction).toContain('50 g');
-    // Step sections that aren't Objetivo, Parámetros, or Perfil
+    // Step sections that aren't Objetivo, Parámetros, Perfil, or Preparación
     const stepNames = r1.steps.map((s) => s.instruction.split('\n')[0]);
-    // Step sections include Bloom, Vertido 1, Vertido 2, Finalización
     expect(stepNames.some((n) => n.includes('Bloom'))).toBe(true);
     expect(stepNames.some((n) => n.includes('Vertido'))).toBe(true);
   });
@@ -182,6 +183,7 @@ describe('parseRecipesFromMarkdown', () => {
     for (const r of recipes) {
       expect(r).toHaveProperty('name');
       expect(r).toHaveProperty('objective');
+      expect(r).toHaveProperty('preparation');
       expect(r).toHaveProperty('coffeeDose');
       expect(r).toHaveProperty('waterDose');
       expect(r).toHaveProperty('ratio');
@@ -191,6 +193,12 @@ describe('parseRecipesFromMarkdown', () => {
       expect(r).toHaveProperty('profile');
       expect(r).toHaveProperty('steps');
     }
+  });
+
+  it('extracts preparation text from Preparación section', () => {
+    const recipes = parseRecipesFromMarkdown(v60Sample, 'v60');
+    expect(recipes[0].preparation).toContain('Filtro enjuagado');
+    expect(recipes[1].preparation).toBe(''); // Scott Rao has no Preparación
   });
 });
 

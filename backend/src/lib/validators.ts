@@ -21,8 +21,8 @@ export const createBrewSchema = z.object({
   method: z.string().min(1, 'Method is required'),
   grinder: z.string().nullable().optional(),
   clicks: z.string().nullable().optional(),
-  coffeeDose: z.number().int().positive('Coffee dose must be positive'),
-  waterDose: z.number().int().positive('Water dose must be positive'),
+  coffeeDose: z.number().positive('Coffee dose must be positive'),
+  waterDose: z.number().positive('Water dose must be positive'),
   notes: z.string().nullable().optional(),
   rating: z.string().nullable().optional(),
 });

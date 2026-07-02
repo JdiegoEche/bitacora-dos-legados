@@ -1,7 +1,10 @@
 # Manual E2E Smoke Test — Bitácora Café
 
-> Run through these flows manually after PR 3 (Frontend Beans + Tasting Notes UI).
+> Run through these flows manually to verify the app works.
 > Both the backend and frontend dev servers must be running.
+>
+> **Note**: the DB starts clean (no sample data) — only recipes are seeded.
+> You'll need to add your own coffee beans and brew sessions first.
 
 ## Setup
 
@@ -17,62 +20,27 @@ Open `http://localhost:5173` in a browser.
 
 ---
 
-## Flow 1: Beans Page
+## Flow 1: Add a Coffee Bean
 
-### 1.1 Navigate to Beans
 1. Click **Beans** in the header nav → `/beans` loads
-2. **Expected**: see the seed beans (Ethiopia Yirgacheffe, Colombia La Esperanza, House Blend) listed in alphabetical order
+2. **Expected**: empty state "No hay cafés todavía"
+3. Click **+ Añadir Café** → modal opens
+4. Leave Name empty → try to submit → **Expected**: browser validation blocks (required field)
+5. Fill: Name="Costa Rica La Minita", Roaster="Intelligentsia", Origin="Costa Rica", Roast Level="medium"
+6. Click **Añadir Café** → modal closes, table shows the new bean
 
-### 1.2 Add a Bean
-1. Click **+ Add Bean** → modal opens
-2. Leave Name empty → try to submit → **Expected**: browser validation blocks (required field)
-3. Fill: Name="Costa Rica La Minita", Roaster="Intelligentsia", Origin="Costa Rica", Roast Level="medium"
-4. Click **Add Bean** → modal closes, table updates with new bean at correct alphabetical position
+## Flow 2: Create a Brew Session
 
-### 1.3 Edit a Bean
-1. Click **Edit** on the newly created bean
-2. Change Name to "Costa Rica La Minita Tarrazu"
-3. Click **Update Bean** → modal closes, row shows updated name
+1. Navigate to `/bitacora`
+2. Click **Nuevo registro** → form opens
+3. Fill all required fields, select a bean if you added one
+4. Submit → redirects to the new brew detail
 
-### 1.4 Delete an Unreferenced Bean
-1. Click **Delete** on "Costa Rica La Minita Tarrazu" (no brews reference it)
-2. Confirm the dialog → row disappears
+## Flow 3: Browse Recipes
 
-### 1.5 Delete a Referenced Bean (SET NULL)
-1. Note: "Ethiopia Yirgacheffe" is referenced by the "V60" brew
-2. Click **Delete** on "Ethiopia Yirgacheffe"
-3. Confirm the dialog → row disappears from beans table
-4. Navigate to `/` (brew list) → **Expected**: the V60 brew shows "—" for bean instead of "Ethiopia Yirgacheffe"
-5. Click the V60 brew → **Expected**: detail page shows no coffee bean
-
----
-
-## Flow 2: Brew Detail with Tasting Notes
-
-### 2.1 View Brew Detail with Existing Notes
-1. Navigate to `/` and click the V60 brew
-2. **Expected**: detail page shows full recipe info
-3. Scroll to **Tasting Notes** section → **Expected**: existing seed tasting notes are displayed
-
-### 2.2 Add a Tasting Note
-1. In the brew detail page, scroll to the tasting notes form
-2. Fill: Aroma="earthy", Flavor="dark chocolate", Body="full", Acidity="low", Rating=4, Notes="Rich and satisfying"
-3. Click **Add Note** → form clears, new note card appears in the list
-
-### 2.3 Delete a Tasting Note
-1. Click **Delete** on one of the tasting note cards
-2. **Expected**: the note disappears, remaining notes stay
-
----
-
-## Flow 3: Brew Form with Bean Select
-
-### 3.1 Create Brew with Bean Selection
-1. Navigate to `/brews/new`
-2. Fill all required fields
-3. In the **Coffee Bean** dropdown → **Expected**: remaining beans are listed (Colombia La Esperanza, House Blend)
-4. Select a bean, set rating, fill notes
-5. Submit → redirects to new brew detail
+1. Navigate to `/recetas` → **Expected**: grid of 6 methods (V60, Switch, Origami, Kalita, Chemex, Aeropress)
+2. Click any method → **Expected**: list of recipes with coffee dose, water, ratio, etc.
+3. Click a recipe → **Expected**: detail view with preparation notes, parameters grid, pasos timeline, and profile
 
 ---
 
@@ -80,16 +48,15 @@ Open `http://localhost:5173` in a browser.
 
 | Criterion | Status |
 |-----------|--------|
-| Beans page loads with seed data, alphabetically sorted |  |
+| Beans page shows empty state when no beans exist |  |
 | Add bean creates new entry and closes modal |  |
-| Edit bean updates fields and closes modal |  |
-| Delete unreferenced bean removes it from table |  |
-| Delete referenced bean sets FK to NULL on brews |  |
-| Brew detail shows existing tasting notes |  |
-| Add tasting note via form appears inline |  |
-| Delete tasting note removes only that note |  |
-| Brew form bean dropdown updates correctly |  |
-| Navigation between pages works (brews ↔ beans) |  |
+| Brew form works with selected bean |  |
+| Recipe grid shows all 6 methods |  |
+| Recipe list shows correct count per method |  |
+| Recipe detail shows preparation, params, steps, profile |  |
+| Preparation text displays correctly when present |  |
+| Params with empty values are hidden (not shown blank) |  |
+| Navigation between pages works (bitácora ↔ recetas ↔ beans) |  |
 
 ---
 

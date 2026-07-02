@@ -23,8 +23,9 @@ beforeAll(async () => {
       method TEXT NOT NULL,
       name TEXT NOT NULL,
       objective TEXT,
-      coffee_dose INTEGER NOT NULL,
-      water_dose INTEGER NOT NULL,
+      preparation TEXT NOT NULL DEFAULT '',
+      coffee_dose REAL NOT NULL,
+      water_dose REAL NOT NULL,
       ratio TEXT NOT NULL,
       temperature TEXT NOT NULL,
       grind_size TEXT NOT NULL,
@@ -66,7 +67,7 @@ afterAll(async () => {
 // ─── Seed Tests ─────────────────────────────────────────────────────────────
 
 const EXPECTED_COUNTS: Record<string, number> = {
-  v60: 9,
+  v60: 8,   // 1 filtered out: "Otras recetas competitivas (Resumen técnico)"
   switch: 6,
   origami: 3,
   kalitawave: 3,

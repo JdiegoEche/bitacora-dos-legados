@@ -186,7 +186,8 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
             <input
               required
               type="number"
-              min={1}
+              min={0.1}
+              step={0.1}
               value={form.coffeeDose}
               onChange={(e) => set('coffeeDose', e.target.value)}
               className="input"
@@ -194,11 +195,12 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
 
           <label className="field">
-            Water Dose (ml) *
+            Water Dose (g) *
             <input
               required
               type="number"
-              min={1}
+              min={0.1}
+              step={0.1}
               value={form.waterDose}
               onChange={(e) => set('waterDose', e.target.value)}
               className="input"
