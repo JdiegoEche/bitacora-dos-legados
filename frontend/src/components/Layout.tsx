@@ -14,6 +14,7 @@ export default function Layout() {
 
           <div className="nav-links">
             <Link to="/bitacora" className="nav-link">Bitácora</Link>
+            <Link to="/recetas" className="nav-link">Recetas</Link>
           </div>
 
           <button
