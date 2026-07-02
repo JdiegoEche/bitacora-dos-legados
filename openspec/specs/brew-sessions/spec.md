@@ -8,7 +8,7 @@ The brew sessions domain tracks individual coffee brewing sessions — recipe me
 
 ### Requirement: BRS-REQ-1 — Create Brew Session
 
-The system MUST accept a new brew session with recipe fields and persist it to SQLite.
+The system MUST accept a new brew session with recipe fields and persist it to SQLite. The UI form MUST enforce `coffeeBeanId` as required. After creation, the UI MUST redirect to `/bitacora/:id`.
 
 **Data Model**: `brew_sessions` table:
 | Field | Type | Notes |
@@ -31,6 +31,7 @@ The system MUST accept a new brew session with recipe fields and persist it to S
 - GIVEN valid recipe fields including method, grind, temperature, and coffee bean reference
 - WHEN a POST request is sent to `/api/brews`
 - THEN the system returns `201 Created` with the brew session object including its generated `id`
+- AND the UI redirects to `/bitacora/{beanId}`
 
 #### Scenario: Create brew session with missing required fields
 
@@ -79,6 +80,22 @@ The system MUST delete a brew session and its linked tasting notes.
 - WHEN a DELETE request is sent to `/api/brews/5`
 - THEN the system returns `204 No Content`, the brew session is removed, and all linked tasting notes are cascade-deleted
 
+### Requirement: BRS-REQ-6 — BrewForm preSelectedBeanId Prop
+
+The BrewForm component MUST accept an optional `preSelectedBeanId` prop. When set, the bean selector MUST be hidden and `coffeeBeanId` MUST be auto-assigned from the prop value. The form MUST still allow submission without a bean selector visible.
+
+#### Scenario: BrewForm with preselected bean
+
+- GIVEN a user navigates to `/bitacora/3/brews/new` (preSelectedBeanId=3)
+- WHEN BrewForm renders
+- THEN the bean selector is hidden and the brew is created with `coffeeBeanId: 3`
+
+#### Scenario: BrewForm without preselected bean (legacy)
+
+- GIVEN a user navigates to a brew creation route without preSelectedBeanId
+- WHEN BrewForm renders
+- THEN the bean selector is displayed normally
+
 ## API Contract
 
 | Method | Path | Request Body | Response |
@@ -93,22 +110,19 @@ The system MUST delete a brew session and its linked tasting notes.
 
 | Component | Route | Purpose |
 |-----------|-------|---------|
-| `BrewList` | `/bitacora` | Table of brews sorted by date; each row shows method, bean, rating |
-| `BrewForm` | `/brews/new` | Form for all recipe fields; includes bean selector |
+| `BrewForm` | `/bitacora/:id/brews/new` | Form for all recipe fields; hides bean selector when `preSelectedBeanId` is set |
 | `BrewDetail` | `/brews/:id` | Full recipe display + linked tasting notes |
 | `BrewEdit` | `/brews/:id/edit` | Pre-filled form updating an existing brew |
 
-### Requirement: BREW-REQ-5 — Landing Page Integration
+### Requirement: BRS-REQ-5 — Landing Page Integration
 
-*Note: This requirement was superseded during implementation. The landing page is at `/` (see `specs/landing-page/spec.md`), and `/bitacora` serves as the direct route for BrewList. The redirect requirement was intentionally resolved in favor of the landing page as the root view.*
+The system MUST render bean cards at `/bitacora` (via `BitacoraHome`). Brew creation is accessible from bean context at `/bitacora/:id/brews/new`. (Previously: `/bitacora` rendered BrewList with all brews)
 
-The system SHOULD provide navigation to BrewList at `/bitacora` from the landing page at `/`. Direct access to `/bitacora` MUST render BrewList normally.
-
-#### Scenario: Direct /bitacora access renders BrewList
+#### Scenario: Direct /bitacora access renders bean cards
 
 - GIVEN a user visits `/bitacora` directly
 - WHEN the page loads
-- THEN the BrewList component renders without redirect
+- THEN `BitacoraHome` renders bean cards and a "Crear café" button (not a flat brew list)
 
 ## Acceptance Criteria
 

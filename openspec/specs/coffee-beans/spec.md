@@ -35,7 +35,7 @@ The system MUST accept a new coffee bean entry and persist it to SQLite.
 
 ### Requirement: CBR-REQ-2 — Read Coffee Beans
 
-The system MUST list all coffee beans alphabetically by name, and MUST allow fetching a single bean by ID.
+The system MUST list all coffee beans alphabetically by name, and MUST allow fetching a single bean by ID with aggregate stats (avg rating, method breakdown, brew count).
 
 #### Scenario: List all beans
 
@@ -43,11 +43,11 @@ The system MUST list all coffee beans alphabetically by name, and MUST allow fet
 - WHEN a GET request is sent to `/api/beans`
 - THEN the system returns `200 OK` with an array of beans sorted alphabetically by name
 
-#### Scenario: Get single bean
+#### Scenario: Get single bean with stats
 
-- GIVEN a coffee bean with ID 3 exists
+- GIVEN a coffee bean with ID 3 has 4 brew sessions rated [4, 5, 3, 4] across V60 and Aeropress methods
 - WHEN a GET request is sent to `/api/beans/3`
-- THEN the system returns `200 OK` with the full bean object
+- THEN the system returns `200 OK` with the bean object including `avgRating: 4`, `brewCount: 4`, and `methodBreakdown` mapping methods to counts
 
 ### Requirement: CBR-REQ-3 — Update Coffee Bean
 
@@ -80,7 +80,7 @@ The system MUST allow deleting a coffee bean. If brew sessions reference it, the
 | Method | Path | Request Body | Response |
 |--------|------|-------------|----------|
 | GET | `/api/beans` | — | `200` → `CoffeeBean[]` |
-| GET | `/api/beans/:id` | — | `200` → `CoffeeBean`, `404` |
+| GET | `/api/beans/:id` | — | `200` → `CoffeeBeanWithStats`, `404` |
 | POST | `/api/beans` | `CreateCoffeeBean` | `201` → `CoffeeBean`, `400` |
 | PUT | `/api/beans/:id` | `UpdateCoffeeBean` | `200` → `CoffeeBean`, `404`, `400` |
 | DELETE | `/api/beans/:id` | — | `204`, `404` |
@@ -89,16 +89,19 @@ The system MUST allow deleting a coffee bean. If brew sessions reference it, the
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| `BeanSelect` | Inside `BrewForm` | Dropdown listing all beans; option to add new bean |
-| `BeanForm` | Modal or separate page | Form to add/edit name, roaster, origin, roast level |
-| `BeanList` | `/beans` | Table of all beans with edit/delete actions |
+| `BeanForm` | `/bitacora` → "Crear café" | Form to add name, roaster, origin, roast level; creates then redirects to `/bitacora/:id` |
+| `BitacoraHome` | `/bitacora` | Bean cards grid + "Crear café" action |
+| `BeanDetail` | `/bitacora/:id` | Bean info, aggregate stats, brew history with tasting notes |
 
 ## Acceptance Criteria
 
 - [ ] Create bean with name+roaster → saved to SQLite
 - [ ] Create without name → `400`
 - [ ] List returns beans sorted alphabetically
-- [ ] GET by ID returns full object
+- [ ] GET by ID returns bean fields + `avgRating`, `brewCount`, `methodBreakdown`
+- [ ] Bean with no brews returns stats with `brewCount: 0`
+- [ ] Creating a bean from `/bitacora` redirects to `/bitacora/:id` (not `/beans`)
+- [ ] `/beans` route returns 404 or redirects
 - [ ] PUT updates only provided fields
 - [ ] DELETE removes unreferenced bean
 - [ ] DELETE referenced bean sets FK to NULL on brews (no cascade-delete)
