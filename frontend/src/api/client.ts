@@ -8,6 +8,8 @@ import type {
   CreateBrewData,
   CreateBeanData,
   CreateNoteData,
+  Recipe,
+  RecipeDetail,
 } from '../types';
 
 // ─── Error class ────────────────────────────────────────────────────────────
@@ -110,4 +112,14 @@ export const notesApi = {
 
   delete: (id: number) =>
     request<void>(`/api/notes/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Recipes ────────────────────────────────────────────────────────────────
+
+export const recipesApi = {
+  list: (method?: string) =>
+    request<Recipe[]>(`/api/recipes${method ? `?method=${method}` : ''}`),
+
+  getById: (id: number) =>
+    request<RecipeDetail>(`/api/recipes/${id}`),
 };

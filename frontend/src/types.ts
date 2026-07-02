@@ -83,3 +83,30 @@ export interface CreateNoteData {
   rating?: number | null;
   freeText?: string | null;
 }
+
+// ─── Recipe Catalog ─────────────────────────────────────────────────────────
+
+export interface RecipeStep {
+  stepOrder: number;
+  instruction: string;
+  waterAtStep?: number;
+}
+
+export interface Recipe {
+  id: number;
+  method: string;
+  name: string;
+  objective: string | null;
+  coffeeDose: number;
+  waterDose: number;
+  ratio: string;
+  temperature: string;
+  grindSize: string;
+  totalTime: string;
+  profile: string;
+  createdAt: string;
+}
+
+export interface RecipeDetail extends Recipe {
+  steps: RecipeStep[];
+}
