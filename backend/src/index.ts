@@ -3,6 +3,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
+import authRouter from './routes/auth';
 import brewRouter from './routes/brews';
 import beanRouter from './routes/beans';
 import noteRouter from './routes/notes';
@@ -16,6 +17,7 @@ app.use('/api/*', cors());
 
 // ─── API Routes ─────────────────────────────────────────────────────────────
 
+app.route('/api/auth', authRouter);
 app.route('/api/brews', brewRouter);
 app.route('/api/beans', beanRouter);
 app.route('/api', noteRouter);
@@ -31,6 +33,14 @@ if (process.env.NODE_ENV === 'production') {
     })
   );
 }
+
+// ─── Global error handler ──────────────────────────────────────────────────
+// Returns JSON for all unhandled errors so the frontend never gets text/plain.
+
+app.onError((err, c) => {
+  console.error('[error]', err);
+  return c.json({ error: 'Internal server error' }, 500);
+});
 
 // ─── Health check ───────────────────────────────────────────────────────────
 

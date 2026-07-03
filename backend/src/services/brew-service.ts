@@ -1,19 +1,20 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../db/connection';
 import { brewSessions } from '../db/schema';
 import type { BrewSession, BrewSessionDetail } from '../types';
 
 export const brewService = {
-  async list(): Promise<BrewSession[]> {
+  async list(userId: number): Promise<BrewSession[]> {
     return db
       .select()
       .from(brewSessions)
+      .where(eq(brewSessions.userId, userId))
       .orderBy(desc(brewSessions.createdAt));
   },
 
-  async getById(id: number): Promise<BrewSessionDetail | null> {
+  async getById(id: number, userId: number): Promise<BrewSessionDetail | null> {
     const result = await db.query.brewSessions.findFirst({
-      where: eq(brewSessions.id, id),
+      where: and(eq(brewSessions.id, id), eq(brewSessions.userId, userId)),
       with: {
         coffeeBean: true,
         tastingNotes: {
@@ -26,26 +27,28 @@ export const brewService = {
   },
 
   async create(
-    data: typeof brewSessions.$inferInsert
+    data: typeof brewSessions.$inferInsert,
+    userId: number,
   ): Promise<BrewSession> {
     const [brew] = await db
       .insert(brewSessions)
-      .values(data)
+      .values({ ...data, userId })
       .returning();
     return brew;
   },
 
   async update(
     id: number,
-    data: Partial<typeof brewSessions.$inferInsert>
+    data: Partial<typeof brewSessions.$inferInsert>,
+    userId: number,
   ): Promise<BrewSession | null> {
-    const existing = await db
+    const [existing] = await db
       .select()
       .from(brewSessions)
-      .where(eq(brewSessions.id, id))
+      .where(and(eq(brewSessions.id, id), eq(brewSessions.userId, userId)))
       .limit(1);
 
-    if (existing.length === 0) return null;
+    if (!existing) return null;
 
     const [updated] = await db
       .update(brewSessions)
@@ -56,10 +59,10 @@ export const brewService = {
     return updated;
   },
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: number, userId: number): Promise<boolean> {
     const result = await db
       .delete(brewSessions)
-      .where(eq(brewSessions.id, id))
+      .where(and(eq(brewSessions.id, id), eq(brewSessions.userId, userId)))
       .returning({ id: brewSessions.id });
 
     return result.length > 0;

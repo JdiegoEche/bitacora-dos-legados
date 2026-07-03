@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { eq } from 'drizzle-orm';
 import { db } from './connection';
-import { coffeeBeans, brewSessions, tastingNotes, recipes } from './schema';
+import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from './schema';
 import { parseMethodSlug, parseRecipesFromMarkdown } from '../lib/recipe-parser';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -61,6 +62,20 @@ export async function seedRecipes(): Promise<number> {
 async function seed() {
   console.log('🌱 Seeding database…');
 
+  // Create or get default user (idempotent)
+  const defaultUser = db
+    .select()
+    .from(users)
+    .where(eq(users.email, 'dev@bitacora.dev'))
+    .get();
+
+  if (!defaultUser) {
+    db.insert(users).values({ email: 'dev@bitacora.dev' }).run();
+    console.log('   - 1 user created (dev@bitacora.dev)');
+  } else {
+    console.log('   - 1 user already exists (dev@bitacora.dev)');
+  }
+
   // Clean slate: remove all user-facing data, keep only recipes
   db.delete(tastingNotes).run();
   db.delete(brewSessions).run();
@@ -70,6 +85,7 @@ async function seed() {
   const recipeCount = await seedRecipes();
 
   console.log('✅ Seed complete:');
+  console.log('   - 1 default user (dev@bitacora.dev)');
   console.log('   - 0 coffee beans (empty — ready for your beans)');
   console.log('   - 0 brew sessions (empty — ready for your brews)');
   console.log('   - 0 tasting notes');

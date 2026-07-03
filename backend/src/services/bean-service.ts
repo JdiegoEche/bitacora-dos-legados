@@ -1,47 +1,50 @@
-import { eq, asc, sql, desc, inArray } from 'drizzle-orm';
+import { eq, and, asc, sql, desc, inArray } from 'drizzle-orm';
 import { db } from '../db/connection';
 import { coffeeBeans, brewSessions, tastingNotes } from '../db/schema';
 import type { CoffeeBean, CoffeeBeanWithStats, BrewSessionWithNotes, TastingNote } from '../types';
 
 export const beanService = {
-  async list(): Promise<CoffeeBean[]> {
+  async list(userId: number): Promise<CoffeeBean[]> {
     return db
       .select()
       .from(coffeeBeans)
+      .where(eq(coffeeBeans.userId, userId))
       .orderBy(asc(coffeeBeans.name));
   },
 
-  async getById(id: number): Promise<CoffeeBean | null> {
+  async getById(id: number, userId: number): Promise<CoffeeBean | null> {
     const [bean] = await db
       .select()
       .from(coffeeBeans)
-      .where(eq(coffeeBeans.id, id))
+      .where(and(eq(coffeeBeans.id, id), eq(coffeeBeans.userId, userId)))
       .limit(1);
 
     return bean ?? null;
   },
 
   async create(
-    data: typeof coffeeBeans.$inferInsert
+    data: typeof coffeeBeans.$inferInsert,
+    userId: number,
   ): Promise<CoffeeBean> {
     const [bean] = await db
       .insert(coffeeBeans)
-      .values(data)
+      .values({ ...data, userId })
       .returning();
     return bean;
   },
 
   async update(
     id: number,
-    data: Partial<typeof coffeeBeans.$inferInsert>
+    data: Partial<typeof coffeeBeans.$inferInsert>,
+    userId: number,
   ): Promise<CoffeeBean | null> {
-    const existing = await db
+    const [existing] = await db
       .select()
       .from(coffeeBeans)
-      .where(eq(coffeeBeans.id, id))
+      .where(and(eq(coffeeBeans.id, id), eq(coffeeBeans.userId, userId)))
       .limit(1);
 
-    if (existing.length === 0) return null;
+    if (!existing) return null;
 
     const [updated] = await db
       .update(coffeeBeans)
@@ -52,27 +55,31 @@ export const beanService = {
     return updated;
   },
 
-  async getByIdWithStats(id: number): Promise<CoffeeBeanWithStats | null> {
-    const bean = await this.getById(id);
+  async getByIdWithStats(id: number, userId: number): Promise<CoffeeBeanWithStats | null> {
+    const bean = await this.getById(id, userId);
     if (!bean) return null;
 
-    // Aggregate stats from brew_sessions
+    // Aggregate stats from brew_sessions (scoped to user)
     const [aggregate] = await db
       .select({
         avgRating: sql<number | null>`CAST(AVG(${brewSessions.rating}) AS REAL)`,
         brewCount: sql<number>`COUNT(*)`,
       })
       .from(brewSessions)
-      .where(eq(brewSessions.coffeeBeanId, id));
+      .where(
+        and(eq(brewSessions.coffeeBeanId, id), eq(brewSessions.userId, userId)),
+      );
 
-    // Method breakdown (GROUP BY method)
+    // Method breakdown (GROUP BY method, scoped to user)
     const methodRows = await db
       .select({
         method: brewSessions.method,
         count: sql<number>`COUNT(*)`,
       })
       .from(brewSessions)
-      .where(eq(brewSessions.coffeeBeanId, id))
+      .where(
+        and(eq(brewSessions.coffeeBeanId, id), eq(brewSessions.userId, userId)),
+      )
       .groupBy(brewSessions.method);
 
     const methodBreakdown: Record<string, number> = {};
@@ -88,11 +95,13 @@ export const beanService = {
     };
   },
 
-  async getBrewsByBeanId(id: number): Promise<BrewSessionWithNotes[]> {
+  async getBrewsByBeanId(id: number, userId: number): Promise<BrewSessionWithNotes[]> {
     const brews = await db
       .select()
       .from(brewSessions)
-      .where(eq(brewSessions.coffeeBeanId, id))
+      .where(
+        and(eq(brewSessions.coffeeBeanId, id), eq(brewSessions.userId, userId)),
+      )
       .orderBy(desc(brewSessions.createdAt));
 
     if (brews.length === 0) return [];
@@ -135,7 +144,16 @@ export const beanService = {
     });
   },
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: number, userId: number): Promise<boolean> {
+    // Verify ownership first
+    const [existing] = await db
+      .select()
+      .from(coffeeBeans)
+      .where(and(eq(coffeeBeans.id, id), eq(coffeeBeans.userId, userId)))
+      .limit(1);
+
+    if (!existing) return false;
+
     // SET NULL on all brew sessions referencing this bean
     await db
       .update(brewSessions)

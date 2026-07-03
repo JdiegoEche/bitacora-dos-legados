@@ -1,5 +1,11 @@
 // ─── Frontend type definitions (mirrors backend API shapes) ─────────────────
 
+export interface User {
+  id: number;
+  email: string;
+  createdAt: string;
+}
+
 export interface CoffeeBean {
   id: number;
   name: string;

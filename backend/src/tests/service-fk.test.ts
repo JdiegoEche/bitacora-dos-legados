@@ -9,6 +9,7 @@ import Database from 'better-sqlite3';
 let testDir: string;
 let dbPath: string;
 let sqlite: Database.Database;
+let testUserId: number;
 
 beforeAll(async () => {
   testDir = mkdtempSync(join(tmpdir(), 'bitacora-fk-'));
@@ -20,12 +21,28 @@ beforeAll(async () => {
   sqlite.pragma('foreign_keys = ON');
 
   sqlite.exec(`
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE magic_link_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE coffee_beans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       roaster TEXT NOT NULL,
       origin TEXT,
       roast_level TEXT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -33,6 +50,7 @@ beforeAll(async () => {
     CREATE TABLE brew_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       coffee_bean_id INTEGER REFERENCES coffee_beans(id) ON DELETE SET NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       grind_size TEXT,
       water_temp INTEGER,
       brew_time INTEGER,
@@ -40,7 +58,7 @@ beforeAll(async () => {
       coffee_dose REAL,
       water_dose REAL,
       notes TEXT,
-      rating INTEGER,
+      rating TEXT,
       grinder TEXT,
       clicks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -50,6 +68,7 @@ beforeAll(async () => {
     CREATE TABLE tasting_notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       brew_session_id INTEGER NOT NULL REFERENCES brew_sessions(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       aroma TEXT,
       flavor TEXT,
       body TEXT,
@@ -64,6 +83,14 @@ beforeAll(async () => {
 
   // Set env so services use our test db
   process.env.DATABASE_URL = dbPath;
+
+  // Create a test user
+  const { db } = await import('../db/connection');
+  const { users } = await import('../db/schema');
+  const [user] = await db.insert(users).values({
+    email: 'fk-test@test.com',
+  }).returning();
+  testUserId = user.id;
 });
 
 afterAll(async () => {
@@ -100,13 +127,14 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
     const bean = await beanService.create({
       name: 'Test Bean FK',
       roaster: 'Test Roaster FK',
-    });
+    }, testUserId);
     expect(bean.id).toBeGreaterThan(0);
 
     // Create a brew referencing the bean — need to use raw DB for brew service
     const { db } = await import('../db/connection');
     await db.insert((await import('../db/schema')).brewSessions).values({
       coffeeBeanId: bean.id,
+      userId: testUserId,
       method: 'V60',
       grindSize: 'medium',
       waterTemp: 93,
@@ -118,6 +146,7 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
     // Create a second brew referencing the same bean
     await db.insert((await import('../db/schema')).brewSessions).values({
       coffeeBeanId: bean.id,
+      userId: testUserId,
       method: 'Aeropress',
       grindSize: 'fine',
       waterTemp: 88,
@@ -139,7 +168,7 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
     expect(brewsBefore).toHaveLength(2);
 
     // Delete the bean
-    const deleted = await beanService.delete(bean.id);
+    const deleted = await beanService.delete(bean.id, testUserId);
     expect(deleted).toBe(true);
 
     // Verify the brews still exist but have NULL coffee_bean_id
@@ -160,13 +189,13 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
     const bean = await beanService.create({
       name: 'Solo Bean',
       roaster: 'Solo Roaster',
-    });
+    }, testUserId);
 
     const totalBrewsBefore = await db
       .select()
       .from(brewSessions);
 
-    const deleted = await beanService.delete(bean.id);
+    const deleted = await beanService.delete(bean.id, testUserId);
     expect(deleted).toBe(true);
 
     // Total brews should be unchanged (no SET NULL needed)
@@ -189,13 +218,14 @@ describe('Brew delete — CASCADE on tasting_notes', () => {
     // Create a brew
     const [brew] = await db
       .insert(brewSessions)
-      .values({ method: 'Pour Over', grindSize: 'medium' })
+      .values({ method: 'Pour Over', grindSize: 'medium', userId: testUserId })
       .returning();
 
     // Add 3 tasting notes to that brew
     for (let i = 1; i <= 3; i++) {
       await db.insert(tastingNotes).values({
         brewSessionId: brew.id,
+        userId: testUserId,
         aroma: `aroma-${i}`,
       });
     }
@@ -209,7 +239,7 @@ describe('Brew delete — CASCADE on tasting_notes', () => {
 
     // Delete the brew
     const { brewService } = await import('../services/brew-service');
-    const deleted = await brewService.delete(brew.id);
+    const deleted = await brewService.delete(brew.id, testUserId);
     expect(deleted).toBe(true);
 
     // Verify notes are cascade-deleted

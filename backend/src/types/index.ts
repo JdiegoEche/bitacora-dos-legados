@@ -1,5 +1,19 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { coffeeBeans, brewSessions, tastingNotes, recipes } from '../db/schema';
+import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from '../db/schema';
+
+// ─── Hono Context Extension ─────────────────────────────────────────────────
+
+declare module 'hono' {
+  interface ContextVariableMap {
+    userId: number;
+  }
+}
+
+// ─── Auth types ──────────────────────────────────────────────────────────────
+
+export type User = InferSelectModel<typeof users>;
+export type CreateUser = InferInsertModel<typeof users>;
+
 
 // ─── Select types (what comes out of the DB) ───────────────────────────────
 

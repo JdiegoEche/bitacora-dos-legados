@@ -1,12 +1,21 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../db/connection';
 import { brewSessions, tastingNotes } from '../db/schema';
 import type { TastingNote } from '../types';
 
-type CreateNoteInput = Omit<typeof tastingNotes.$inferInsert, 'brewSessionId'>;
+type CreateNoteInput = Omit<typeof tastingNotes.$inferInsert, 'brewSessionId' | 'userId'>;
 
 export const noteService = {
-  async listByBrew(brewId: number): Promise<TastingNote[]> {
+  async listByBrew(brewId: number, userId: number): Promise<TastingNote[]> {
+    // Verify brew belongs to user first
+    const brew = await db
+      .select({ id: brewSessions.id })
+      .from(brewSessions)
+      .where(and(eq(brewSessions.id, brewId), eq(brewSessions.userId, userId)))
+      .limit(1);
+
+    if (!brew.length) return [];
+
     return db
       .select()
       .from(tastingNotes)
@@ -16,16 +25,46 @@ export const noteService = {
 
   async create(
     brewId: number,
-    data: CreateNoteInput
-  ): Promise<TastingNote> {
+    data: CreateNoteInput,
+    userId: number,
+  ): Promise<TastingNote | null> {
+    // Verify brew belongs to user
+    const brew = await db
+      .select({ id: brewSessions.id })
+      .from(brewSessions)
+      .where(and(eq(brewSessions.id, brewId), eq(brewSessions.userId, userId)))
+      .limit(1);
+
+    if (!brew.length) return null;
+
     const [note] = await db
       .insert(tastingNotes)
-      .values({ ...data, brewSessionId: brewId })
+      .values({ ...data, brewSessionId: brewId, userId })
       .returning();
     return note;
   },
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: number, userId: number): Promise<boolean> {
+    // First find the note, then verify its parent brew belongs to the user
+    const [note] = await db
+      .select()
+      .from(tastingNotes)
+      .where(eq(tastingNotes.id, id))
+      .limit(1);
+
+    if (!note) return false;
+
+    // Verify the parent brew belongs to the user
+    const brew = await db
+      .select({ id: brewSessions.id })
+      .from(brewSessions)
+      .where(
+        and(eq(brewSessions.id, note.brewSessionId), eq(brewSessions.userId, userId)),
+      )
+      .limit(1);
+
+    if (!brew.length) return false;
+
     const result = await db
       .delete(tastingNotes)
       .where(eq(tastingNotes.id, id))
@@ -34,11 +73,11 @@ export const noteService = {
     return result.length > 0;
   },
 
-  async brewExists(brewId: number): Promise<boolean> {
+  async brewBelongsToUser(brewId: number, userId: number): Promise<boolean> {
     const [brew] = await db
       .select({ id: brewSessions.id })
       .from(brewSessions)
-      .where(eq(brewSessions.id, brewId))
+      .where(and(eq(brewSessions.id, brewId), eq(brewSessions.userId, userId)))
       .limit(1);
 
     return !!brew;

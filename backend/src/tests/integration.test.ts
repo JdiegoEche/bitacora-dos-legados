@@ -8,10 +8,23 @@ import { Hono } from 'hono';
 // Note: Route modules are imported dynamically in beforeAll after DATABASE_URL is set.
 // This ensures that connection.ts evaluates with the test database path.
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function getAuthHeader(email: string): Promise<Record<string, string>> {
+  const loginRes = await app.request('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const { token: jwt } = await loginRes.json() as { token: string };
+  return { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' };
+}
+
 // ─── Setup ──────────────────────────────────────────────────────────────────
 
 let testDir: string;
 let app: Hono;
+let authHeaders: Record<string, string>;
 
 beforeAll(async () => {
   testDir = mkdtempSync(join(tmpdir(), 'bitacora-int-'));
@@ -24,12 +37,28 @@ beforeAll(async () => {
   sqlite.pragma('foreign_keys = ON');
 
   sqlite.exec(`
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE magic_link_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE coffee_beans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       roaster TEXT NOT NULL,
       origin TEXT,
       roast_level TEXT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -37,6 +66,7 @@ beforeAll(async () => {
     CREATE TABLE brew_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       coffee_bean_id INTEGER REFERENCES coffee_beans(id) ON DELETE SET NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       grind_size TEXT,
       water_temp INTEGER,
       brew_time INTEGER,
@@ -44,7 +74,7 @@ beforeAll(async () => {
       coffee_dose REAL,
       water_dose REAL,
       notes TEXT,
-      rating INTEGER,
+      rating TEXT,
       grinder TEXT,
       clicks TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -54,12 +84,30 @@ beforeAll(async () => {
     CREATE TABLE tasting_notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       brew_session_id INTEGER NOT NULL REFERENCES brew_sessions(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       aroma TEXT,
       flavor TEXT,
       body TEXT,
       acidity TEXT,
       rating INTEGER,
       free_text TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE recipes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      method TEXT NOT NULL,
+      name TEXT NOT NULL,
+      objective TEXT,
+      preparation TEXT NOT NULL DEFAULT '',
+      coffee_dose REAL NOT NULL,
+      water_dose REAL NOT NULL,
+      ratio TEXT NOT NULL,
+      temperature TEXT NOT NULL,
+      grind_size TEXT NOT NULL,
+      total_time TEXT NOT NULL,
+      profile TEXT NOT NULL,
+      steps TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
@@ -70,18 +118,25 @@ beforeAll(async () => {
   process.env.DATABASE_URL = dbPath;
 
   // Dynamic imports — these will see DATABASE_URL set above
+  const { default: authRouter } = await import('../routes/auth');
   const { default: brewRouter } = await import('../routes/brews');
   const { default: beanRouter } = await import('../routes/beans');
   const { default: noteRouter } = await import('../routes/notes');
+  const { default: recipeRouter } = await import('../routes/recipes');
   const { cors } = await import('hono/cors');
 
   // Build the Hono app (same structure as index.ts but without server startup)
   app = new Hono();
   app.use('/api/*', cors());
+  app.route('/api/auth', authRouter);
   app.route('/api/brews', brewRouter);
   app.route('/api/beans', beanRouter);
   app.route('/api', noteRouter);
+  app.route('/api/recipes', recipeRouter);
   app.get('/api/health', (c) => c.json({ status: 'ok' }));
+
+  // Create test user and get auth headers for protected routes
+  authHeaders = await getAuthHeader('integration-test@test.com');
 });
 
 afterAll(async () => {
@@ -114,7 +169,7 @@ describe('POST /api/beans', () => {
   it('creates a bean and returns 201', async () => {
     const res = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Test Bean',
         roaster: 'Test Roaster',
@@ -133,7 +188,7 @@ describe('POST /api/beans', () => {
   it('returns 400 when name is missing', async () => {
     const res = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ roaster: 'Test' }),
     });
     expect(res.status).toBe(400);
@@ -145,16 +200,16 @@ describe('GET /api/beans', () => {
     // Create a few beans first
     await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Zulu Bean', roaster: 'Z' }),
     });
     await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Alpha Bean', roaster: 'A' }),
     });
 
-    const res = await app.request('/api/beans');
+    const res = await app.request('/api/beans', { headers: authHeaders });
     expect(res.status).toBe(200);
     const beans = await res.json();
     expect(Array.isArray(beans)).toBe(true);
@@ -171,14 +226,14 @@ describe('PUT /api/beans/:id', () => {
   it('updates a bean and returns 200', async () => {
     const createRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Update Me', roaster: 'R' }),
     });
     const bean = await createRes.json();
 
     const res = await app.request(`/api/beans/${bean.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ roastLevel: 'dark' }),
     });
     expect(res.status).toBe(200);
@@ -189,7 +244,7 @@ describe('PUT /api/beans/:id', () => {
   it('returns 404 for non-existent bean', async () => {
     const res = await app.request('/api/beans/99999', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Nope' }),
     });
     expect(res.status).toBe(404);
@@ -200,17 +255,23 @@ describe('DELETE /api/beans/:id', () => {
   it('deletes unreferenced bean and returns 204', async () => {
     const createRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Delete Me', roaster: 'R' }),
     });
     const bean = await createRes.json();
 
-    const res = await app.request(`/api/beans/${bean.id}`, { method: 'DELETE' });
+    const res = await app.request(`/api/beans/${bean.id}`, {
+      method: 'DELETE',
+      headers: authHeaders,
+    });
     expect(res.status).toBe(204);
   });
 
   it('returns 404 for non-existent bean delete', async () => {
-    const res = await app.request('/api/beans/99999', { method: 'DELETE' });
+    const res = await app.request('/api/beans/99999', {
+      method: 'DELETE',
+      headers: authHeaders,
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -221,7 +282,7 @@ describe('POST /api/brews', () => {
   it('creates a brew and returns 201', async () => {
     const res = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'V60',
         grindSize: 'medium',
@@ -242,7 +303,7 @@ describe('GET /api/brews/:id', () => {
   it('returns brew with relations', async () => {
     const createRes = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'Aeropress',
         grindSize: 'fine',
@@ -254,7 +315,9 @@ describe('GET /api/brews/:id', () => {
     });
     const created = await createRes.json();
 
-    const res = await app.request(`/api/brews/${created.id}`);
+    const res = await app.request(`/api/brews/${created.id}`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const brew = await res.json();
     expect(brew.method).toBe('Aeropress');
@@ -262,7 +325,7 @@ describe('GET /api/brews/:id', () => {
   });
 
   it('returns 404 for non-existent brew', async () => {
-    const res = await app.request('/api/brews/99999');
+    const res = await app.request('/api/brews/99999', { headers: authHeaders });
     expect(res.status).toBe(404);
   });
 });
@@ -273,7 +336,7 @@ describe('POST /api/brews/:brewId/notes', () => {
   it('creates a note for existing brew and returns 201', async () => {
     const brewRes = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'Chemex',
         grindSize: 'medium-coarse',
@@ -287,7 +350,7 @@ describe('POST /api/brews/:brewId/notes', () => {
 
     const res = await app.request(`/api/brews/${brew.id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         aroma: 'floral',
         flavor: 'berry',
@@ -303,7 +366,7 @@ describe('POST /api/brews/:brewId/notes', () => {
   it('returns 404 for non-existent brew', async () => {
     const res = await app.request('/api/brews/99999/notes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aroma: 'test' }),
     });
     expect(res.status).toBe(404);
@@ -314,7 +377,7 @@ describe('GET /api/brews/:brewId/notes', () => {
   it('returns notes for a brew', async () => {
     const brewRes = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'Espresso',
         grindSize: 'fine',
@@ -329,23 +392,27 @@ describe('GET /api/brews/:brewId/notes', () => {
     // Add 2 notes
     await app.request(`/api/brews/${brew.id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aroma: 'nutty' }),
     });
     await app.request(`/api/brews/${brew.id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ flavor: 'caramel' }),
     });
 
-    const res = await app.request(`/api/brews/${brew.id}/notes`);
+    const res = await app.request(`/api/brews/${brew.id}/notes`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const notes = await res.json();
     expect(notes).toHaveLength(2);
   });
 
   it('returns 404 for brew that does not exist', async () => {
-    const res = await app.request('/api/brews/99999/notes');
+    const res = await app.request('/api/brews/99999/notes', {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -354,7 +421,7 @@ describe('DELETE /api/notes/:id', () => {
   it('deletes a single note and returns 204', async () => {
     const brewRes = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'Siphon',
         grindSize: 'medium',
@@ -368,19 +435,23 @@ describe('DELETE /api/notes/:id', () => {
 
     const noteRes = await app.request(`/api/brews/${brew.id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aroma: 'test delete' }),
     });
     const note = await noteRes.json();
 
     const res = await app.request(`/api/notes/${note.id}`, {
       method: 'DELETE',
+      headers: authHeaders,
     });
     expect(res.status).toBe(204);
   });
 
   it('returns 404 for non-existent note', async () => {
-    const res = await app.request('/api/notes/99999', { method: 'DELETE' });
+    const res = await app.request('/api/notes/99999', {
+      method: 'DELETE',
+      headers: authHeaders,
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -394,7 +465,7 @@ describe('GET /api/beans/:id — with stats', () => {
     // Create a bean
     const beanRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Stats Bean', roaster: 'Stats Roaster' }),
     });
     const bean = await beanRes.json();
@@ -409,12 +480,14 @@ describe('GET /api/beans/:id — with stats', () => {
     for (const payload of brewPayloads) {
       await app.request('/api/brews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
     }
 
-    const res = await app.request(`/api/beans/${bean.id}`);
+    const res = await app.request(`/api/beans/${bean.id}`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.avgRating).toBeCloseTo(4, 0);
@@ -423,19 +496,21 @@ describe('GET /api/beans/:id — with stats', () => {
   });
 
   it('returns 404 for non-existent bean', async () => {
-    const res = await app.request('/api/beans/99999');
+    const res = await app.request('/api/beans/99999', { headers: authHeaders });
     expect(res.status).toBe(404);
   });
 
   it('returns stats with brewCount 0 when bean has no brews', async () => {
     const beanRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'Lonely Bean', roaster: 'Solo' }),
     });
     const bean = await beanRes.json();
 
-    const res = await app.request(`/api/beans/${bean.id}`);
+    const res = await app.request(`/api/beans/${bean.id}`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.brewCount).toBe(0);
@@ -448,7 +523,7 @@ describe('GET /api/beans/:id/brews', () => {
   it('returns brews newest-first with tastingNotesSummary', async () => {
     const beanRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'History Bean', roaster: 'History R' }),
     });
     const bean = await beanRes.json();
@@ -456,7 +531,7 @@ describe('GET /api/beans/:id/brews', () => {
     // Create 2 brews for the bean — add delay so created_at differs
     const brew1Res = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'V60', grindSize: 'medium', waterTemp: 93, brewTime: '150',
         coffeeDose: 15, waterDose: 250, coffeeBeanId: bean.id,
@@ -469,7 +544,7 @@ describe('GET /api/beans/:id/brews', () => {
 
     const brew2Res = await app.request('/api/brews', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         method: 'Aeropress', grindSize: 'fine', waterTemp: 88, brewTime: '120',
         coffeeDose: 14, waterDose: 200, coffeeBeanId: bean.id,
@@ -480,11 +555,13 @@ describe('GET /api/beans/:id/brews', () => {
     // Add tasting notes to brew2 (the newer brew)
     await app.request(`/api/brews/${brew2.id}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aroma: 'floral', flavor: 'berry' }),
     });
 
-    const res = await app.request(`/api/beans/${bean.id}/brews`);
+    const res = await app.request(`/api/beans/${bean.id}/brews`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const brews = await res.json();
     expect(brews).toHaveLength(2);
@@ -498,22 +575,45 @@ describe('GET /api/beans/:id/brews', () => {
   });
 
   it('returns 404 for non-existent bean', async () => {
-    const res = await app.request('/api/beans/99999/brews');
+    const res = await app.request('/api/beans/99999/brews', {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(404);
   });
 
   it('returns 200 with empty array when bean has no brews', async () => {
     const beanRes = await app.request('/api/beans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'No Brews Yet', roaster: 'Empty R' }),
     });
     const bean = await beanRes.json();
 
-    const res = await app.request(`/api/beans/${bean.id}/brews`);
+    const res = await app.request(`/api/beans/${bean.id}/brews`, {
+      headers: authHeaders,
+    });
     expect(res.status).toBe(200);
     const brews = await res.json();
     expect(brews).toEqual([]);
+  });
+});
+
+// ─── Recipe Routes (Public — No Auth Required) ──────────────────────────────
+
+describe('Recipe routes — public access', () => {
+  it('GET /api/recipes returns 200 without auth headers', async () => {
+    const res = await app.request('/api/recipes');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body)).toBe(true);
+  });
+
+  it('GET /api/recipes/:id returns 200 without auth headers', async () => {
+    const res = await app.request('/api/recipes/99999');
+    // Non-existent returns 404, not 401 — proving no auth middleware
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBeDefined();
   });
 });
 

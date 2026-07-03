@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1783095708117,
+      "tag": "0000_jittery_gorilla_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1783095841110,
+      "tag": "0001_shiny_red_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783111428398,
+      "tag": "0002_flippant_karen_page",
+      "breakpoints": true
+    }
+  ]
+}

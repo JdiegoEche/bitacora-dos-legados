@@ -35,7 +35,7 @@ describe('App — route mapping', () => {
   it('renders LandingPage at /', () => {
     renderAt('/');
     // Landing page hero should include the brand title
-    expect(screen.getByText(/bitácora café/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /bitácora café/i })).toBeInTheDocument();
   });
 
   it('renders Layout nav on every route', () => {

@@ -7,7 +7,7 @@ Replace raw hex/emoji styling with a CSS custom property design system (`tokens.
 ## Architecture Decisions
 
 | Option | Tradeoff | Decision |
-|--------|----------|----------|
+| ------ | --------- | --------- |
 | CSS vars vs. CSS Modules | Vars propagate globally — one source of truth, no build change. Modules require refactoring all 10 component imports. | **CSS vars** — zero import changes, BEM preserved |
 | CSS vars vs. Tailwind | Tailwind requires install + purge config + full rewrite. The entire CSS is 400 lines of BEM. | **CSS vars** — 1 file vs. new toolchain with no benefit for a project this size |
 | `data-theme` vs. `prefers-color-scheme` only | `prefers-color-scheme` is OS-scoped, no per-session override. `data-theme` supports toggle + localStorage. | **`data-theme`** — user can choose independently of OS |
@@ -58,14 +58,12 @@ index.html (fonts + meta)
 
 ## Dark Mode Strategy
 
-```
 ThemeProvider (context)
   ├── state: theme ('light' | 'dark')
   ├── on mount: read localStorage("bitacora-theme") || prefers-color-scheme || 'light'
   │   └── set data-theme on document.documentElement
   ├── toggle(): flip theme → set data-theme → write localStorage
   └── expose: { theme, toggleTheme }
-```
 
 - **Persistence**: `localStorage` key `bitacora-theme` — immediate write on toggle
 - **Fallback chain**: localStorage → `prefers-color-scheme` media query → `'light'`
@@ -75,7 +73,7 @@ ThemeProvider (context)
 ## File Changes
 
 | File | Action | Description |
-|------|--------|-------------|
+| ---- | ------ | ----------- |
 | `frontend/src/styles/tokens.css` | **Create** | All design tokens: colors, fonts, spacing, shadows, radius — light (`:root`) + dark (`[data-theme="dark"]`) |
 | `frontend/src/components/Layout.tsx` | **Create** | Nav bar (logo, links, dark toggle) + footer + `<Outlet />` for routes. Uses `useTheme()` |
 | `frontend/src/components/LandingPage.tsx` | **Create** | Hero section (title, tagline, CSS-gradient visual) + 3 CTA cards. No data fetches |
@@ -117,7 +115,7 @@ interface ThemeContextValue {
 ## Responsive Breakpoints
 
 | Breakpoint | Landing Page | Nav |
-|------------|-------------|-----|
+| ---------- | ------------ | --- |
 | < 640px | Single column, stacked CTAs | Compact, vertical menu if needed |
 | 640px - 1024px | 2-column grid CTAs | Horizontal nav |
 | ≥ 1024px | 3-column grid, larger hero | Full nav |
@@ -137,7 +135,7 @@ interface ThemeContextValue {
 ## Testing Strategy
 
 | Layer | What | How |
-|-------|------|-----|
+| ----- | ---- | --- |
 | Build | TypeScript + Vite | `npx tsc --noEmit && npx vite build` — must pass with 0 errors |
 | Token audit | All `.css` files | `rg "#[0-9a-fA-F]" --include="*.css" frontend/src/styles/` — only `tokens.css` should match. Run after migration step 5 |
 | Dark mode | All routes | Manual: toggle once per route, verify no light-bleed |

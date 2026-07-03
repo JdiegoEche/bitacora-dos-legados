@@ -10,7 +10,37 @@ import type {
   CreateNoteData,
   Recipe,
   RecipeDetail,
+  User,
 } from '../types';
+
+// ─── Auth token management ──────────────────────────────────────────────────
+
+const TOKEN_KEY = 'bitacora-auth-token';
+
+let authToken: string | null = (() => {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+})();
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+  try {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch {
+    // localStorage unavailable — silently ignore
+  }
+}
+
+export function clearAuthToken(): void {
+  setAuthToken(null);
+}
 
 // ─── Error class ────────────────────────────────────────────────────────────
 
@@ -33,9 +63,18 @@ async function request<T>(
   options?: RequestInit,
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> | undefined),
+  };
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
+    headers,
   });
 
   if (!res.ok) {
@@ -112,6 +151,18 @@ export const notesApi = {
 
   delete: (id: number) =>
     request<void>(`/api/notes/${id}`, { method: 'DELETE' }),
+};
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+export const authApi = {
+  login: (email: string) =>
+    request<{ ok: boolean; token: string }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  me: () => request<User>('/api/auth/me'),
 };
 
 // ─── Recipes ────────────────────────────────────────────────────────────────

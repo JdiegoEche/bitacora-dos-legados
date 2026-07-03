@@ -11,6 +11,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/Layout';
 
@@ -18,8 +19,9 @@ import Layout from '../components/Layout';
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(
-    <ThemeProvider>
-      <BrowserRouter>
+    <AuthProvider>
+      <ThemeProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={ui}>
             <Route path="/" element={<div data-testid="content">Home</div>} />
@@ -28,6 +30,7 @@ function renderWithProviders(ui: React.ReactElement) {
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
+    </AuthProvider>
   );
 }
 
@@ -61,10 +64,11 @@ describe('Layout — nav bar', () => {
     expect(link).toHaveAttribute('href', '/recetas');
   });
 
-  it('renders exactly three navigation links (logo + nav links)', () => {
+  it('renders navigation links (logo + nav links + login)', () => {
     renderWithProviders(<Layout />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(3);
+    // Logo, Bitácora, Recetas, Iniciar sesión
+    expect(links).toHaveLength(4);
   });
 
   it('renders dark mode toggle button with aria-label', () => {
