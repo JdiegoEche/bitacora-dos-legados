@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { setAuthToken, clearAuthToken } from '../api/client';
 
@@ -26,6 +27,7 @@ function getStoredToken(): string | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string): Promise<void> => {
+    // Clear stale cached data from previous session
+    queryClient.clear();
+
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,14 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = (await meRes.json()) as User;
       setUser(userData);
     }
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     setToken(null);
     clearAuthToken();
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   const value: AuthContextValue = {
     user,

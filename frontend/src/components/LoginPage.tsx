@@ -2,10 +2,33 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+const REMEMBERED_EMAIL_KEY = 'bitacora-remembered-email';
+
+function getRememberedEmail(): string {
+  try {
+    return localStorage.getItem(REMEMBERED_EMAIL_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function saveRememberedEmail(email: string): void {
+  try {
+    localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+  } catch { /* noop */ }
+}
+
+function clearRememberedEmail(): void {
+  try {
+    localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+  } catch { /* noop */ }
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(getRememberedEmail);
+  const [rememberEmail, setRememberEmail] = useState(() => !!getRememberedEmail());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,6 +39,11 @@ export default function LoginPage() {
 
     try {
       await login(email);
+      if (rememberEmail) {
+        saveRememberedEmail(email);
+      } else {
+        clearRememberedEmail();
+      }
       navigate('/bitacora', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
@@ -46,6 +74,15 @@ export default function LoginPage() {
               required
               autoFocus
             />
+          </label>
+
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={rememberEmail}
+              onChange={(e) => setRememberEmail(e.target.checked)}
+            />
+            <span>Recordar email</span>
           </label>
 
           <button className="btn" type="submit" disabled={isSubmitting}>
