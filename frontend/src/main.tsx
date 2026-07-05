@@ -24,3 +24,11 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+// Register service worker (PWA) after render — non-blocking
+(async () => {
+  if ('serviceWorker' in navigator) {
+    const { registerSW } = await import('virtual:pwa-register');
+    registerSW({ immediate: true });
+  }
+})();

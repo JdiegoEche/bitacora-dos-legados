@@ -39,4 +39,19 @@ describe('main.tsx — import order', () => {
     expect(source).toMatch(/@tanstack\/react-query/);
     expect(source).toMatch(/\.\/App/);
   });
+
+  // --- PWA: Service Worker registration (PWA-REQ-3) ---
+
+  it('conditionally imports virtual:pwa-register via async IIFE', () => {
+    expect(source).toMatch(/import\(['"]virtual:pwa-register['"]\)/);
+    expect(source).toMatch(/async\s*\(\)/);
+  });
+
+  it('guards SW registration with serviceWorker in navigator check', () => {
+    expect(source).toMatch(/'serviceWorker' in navigator/);
+  });
+
+  it('calls registerSW with { immediate: true }', () => {
+    expect(source).toMatch(/registerSW\(\s*\{\s*immediate:\s*true\s*\}\s*\)/);
+  });
 });
