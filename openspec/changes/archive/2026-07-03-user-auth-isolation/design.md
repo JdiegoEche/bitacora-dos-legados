@@ -7,7 +7,7 @@ Custom auth layer: `jose` (HS256 JWT) + Drizzle persistence. Magic links only �
 ## Architecture Decisions
 
 | Decision | Choice | Alternatives | Rationale |
-|----------|--------|-------------|-----------|
+| --- | --- | --- | --- |
 | JWT vs sessions | Stateless JWT | DB sessions | No session lookup per request; simpler for SPA API. 7-day expiry, no refresh token in v1 |
 | JWT library | `jose` | `@hono/jwt` | `jose` is standalone, more maintained; `@hono/jwt` wraps it anyway, adds unnecessary abstraction |
 | Token storage | SHA-256 hash in DB | Raw token in DB | Raw token never stored — hash only. `crypto.randomBytes(32)` → hex, hash stored, raw returned once |
@@ -17,7 +17,7 @@ Custom auth layer: `jose` (HS256 JWT) + Drizzle persistence. Magic links only �
 
 ## Data Flow
 
-```
+```text
 Magic Link:
   Client                  Backend                      DB
     │ POST /api/auth/      │ upsert user                │
@@ -45,7 +45,7 @@ Frontend:
 ## File Changes
 
 | File | Action | Description |
-|------|--------|-------------|
+| --- | --- | --- |
 | `backend/src/db/schema.ts` | Modify | ADD `users` table + `magic_link_tokens` table; ADD `userId` FK to `coffee_beans`, `brew_sessions`, `tasting_notes` |
 | `backend/src/db/migrations/` | Create | Drizzle migration for new tables + columns |
 | `backend/src/lib/auth.ts` | Create | `signJWT(userId, email)`, `verifyJWT(token)`, `generateToken()`, `hashToken(raw)` with `jose` |
@@ -99,7 +99,7 @@ GET  /api/auth/me          Authorization: Bearer     → 200 User | 401
 ## Testing Strategy
 
 | Layer | What | Approach |
-|-------|------|----------|
+| --- | --- | --- |
 | Unit | JWT sign/verify, token hash/validate, expiry checks | Pure function tests, no DB |
 | Integration — Auth | Full magic link flow, dev endpoint, me endpoint, token expiry, double-use rejection | `app.request()` with temp SQLite, same pattern as existing `integration.test.ts` |
 | Integration — Isolation | User A cannot see/update/delete User B's data; tasting note ownership via brew join | Two users created via `getAuthHeader()`, cross-user requests return 404 |
