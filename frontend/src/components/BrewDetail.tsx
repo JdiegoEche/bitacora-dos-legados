@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { brewsApi } from '../api/client';
 import BrewDetailSkeleton from './skeletons/BrewDetailSkeleton';
+import ConfirmDialog from './ConfirmDialog';
 import TastingNotesList from './TastingNotesList';
 import { useToast } from '../contexts/ToastContext';
 
@@ -28,6 +30,7 @@ export default function BrewDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const {
     data: brew,
@@ -43,6 +46,7 @@ export default function BrewDetail() {
     mutationFn: () => brewsApi.delete(brewId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brews'] });
+      toast.success('Preparación eliminada correctamente.');
       navigate('/bitacora');
     },
   });
@@ -99,13 +103,10 @@ export default function BrewDetail() {
           </Link>
           <button
             className="btn btn-danger"
-            onClick={() => {
-              if (window.confirm('Delete this brew session?'))
-                deleteMutation.mutate();
-            }}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+            {deleteMutation.isPending ? 'Eliminando…' : 'Eliminar'}
           </button>
         </div>
       </div>
@@ -178,6 +179,19 @@ export default function BrewDetail() {
       )}
 
       <TastingNotesList brewId={brew.id} />
+
+      {showDeleteDialog && (
+        <ConfirmDialog
+          title="¿Eliminar preparación?"
+          message={`Se eliminará la preparación de ${brew.method} del ${new Date(brew.createdAt).toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' })} y sus notas de cata asociadas.`}
+          confirmLabel="Eliminar preparación"
+          onConfirm={() => {
+            setShowDeleteDialog(false);
+            deleteMutation.mutate();
+          }}
+          onCancel={() => setShowDeleteDialog(false)}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { beansApi } from '../api/client';
 import BeanForm from './BeanForm';
 import BeanDetailSkeleton from './skeletons/BeanDetailSkeleton';
+import ConfirmDialog from './ConfirmDialog';
 import { useToast } from '../contexts/ToastContext';
 import type { CoffeeBean, CoffeeBeanWithStats, BrewSessionWithNotes } from '../types';
 
@@ -149,6 +150,7 @@ export default function BeanDetail() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [editingBean, setEditingBean] = useState<CoffeeBean | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const {
     data: stats,
@@ -181,11 +183,7 @@ export default function BeanDetail() {
     },
   });
 
-  const handleDelete = () => {
-    if (window.confirm('¿Eliminar este café? También se borrarán todas sus preparaciones.')) {
-      deleteMutation.mutate();
-    }
-  };
+  const handleDelete = () => deleteMutation.mutate();
 
   if (Number.isNaN(beanId)) {
     return (
@@ -232,7 +230,7 @@ export default function BeanDetail() {
           </button>
           <button
             className="btn btn-danger"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending ? 'Eliminando…' : 'Eliminar'}
@@ -266,6 +264,24 @@ export default function BeanDetail() {
         <BeanForm
           bean={editingBean}
           onClose={() => setEditingBean(null)}
+        />
+      )}
+
+      {showDeleteDialog && (
+        <ConfirmDialog
+          title="¿Eliminar café?"
+          message={`Se eliminará «${stats.name}» de ${stats.roaster} y todas sus preparaciones. Esta acción no se puede deshacer.`}
+          details={
+            brews && brews.length > 0
+              ? `${brews.length} preparación(es) serán eliminadas`
+              : undefined
+          }
+          confirmLabel="Eliminar café"
+          onConfirm={() => {
+            setShowDeleteDialog(false);
+            handleDelete();
+          }}
+          onCancel={() => setShowDeleteDialog(false)}
         />
       )}
     </div>
