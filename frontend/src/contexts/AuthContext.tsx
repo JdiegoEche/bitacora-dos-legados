@@ -1,11 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
-import { setAuthToken, clearAuthToken } from '../api/client';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-const TOKEN_KEY = 'bitacora-auth-token';
+import { setAuthToken, clearAuthToken, authApi } from '../api/client';
 
 interface AuthContextValue {
   user: User | null;
@@ -20,7 +16,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function getStoredToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem('bitacora-auth-token');
   } catch {
     return null;
   }
@@ -32,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount: if token exists, validate it via GET /api/auth/me
+  // On mount: if token exists, validate it via authApi.me()
   useEffect(() => {
     const storedToken = getStoredToken();
     if (!storedToken) {
@@ -43,23 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(storedToken);
     setAuthToken(storedToken);
 
-    fetch(`${API_BASE}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${storedToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Invalid token');
-        return res.json() as Promise<User>;
-      })
+    authApi.me()
       .then((userData) => {
         setUser(userData);
         setIsLoading(false);
       })
       .catch(() => {
         // Token invalid — clear it
-        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem('bitacora-auth-token');
         setToken(null);
         setAuthToken(null);
         setIsLoading(false);
@@ -70,36 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear stale cached data from previous session
     queryClient.clear();
 
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error ?? 'Login failed');
-    }
+    const data = await authApi.login(email);
 
     // Store JWT and load user profile
-    const jwt = data.token as string;
-    localStorage.setItem(TOKEN_KEY, jwt);
+    const jwt = data.token;
+    localStorage.setItem('bitacora-auth-token', jwt);
     setToken(jwt);
     setAuthToken(jwt);
 
-    const meRes = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (meRes.ok) {
-      const userData = (await meRes.json()) as User;
-      setUser(userData);
-    }
+    const userData = await authApi.me();
+    setUser(userData);
   }, [queryClient]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('bitacora-auth-token');
     setUser(null);
     setToken(null);
     clearAuthToken();

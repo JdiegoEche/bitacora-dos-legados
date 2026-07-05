@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // ─── Users ──────────────────────────────────────────────────────────────────
@@ -136,3 +136,17 @@ export const usersRelations = relations(users, ({ many }) => ({
   brewSessions: many(brewSessions),
   tastingNotes: many(tastingNotes),
 }));
+
+// ─── Indexes ────────────────────────────────────────────────────────────────
+
+export const brewSessionsUserMethodIdx = index('brew_sessions_user_method_idx')
+  .on(brewSessions.userId, brewSessions.method);
+
+export const brewSessionsCoffeeBeanIdx = index('brew_sessions_coffee_bean_idx')
+  .on(brewSessions.coffeeBeanId);
+
+export const tastingNotesBrewSessionIdx = index('tasting_notes_brew_session_idx')
+  .on(tastingNotes.brewSessionId);
+
+export const coffeeBeansUserIdx = index('coffee_beans_user_idx')
+  .on(coffeeBeans.userId);
