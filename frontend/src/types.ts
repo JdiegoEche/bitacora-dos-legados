@@ -90,6 +90,26 @@ export interface CreateNoteData {
   freeText?: string | null;
 }
 
+// ─── Data Insights ──────────────────────────────────────────────────────────
+
+export interface WordFreq {
+  word: string;
+  count: number;
+}
+
+export interface TastingWordsResponse {
+  aroma: WordFreq[];
+  flavor: WordFreq[];
+  body: WordFreq[];
+  acidity: WordFreq[];
+}
+
+export interface MethodPopItem {
+  method: string;
+  count: number;
+  avgRating: number | null;
+}
+
 // ─── Recipe Catalog ─────────────────────────────────────────────────────────
 
 export interface RecipeStep {

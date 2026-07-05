@@ -11,6 +11,8 @@ import type {
   Recipe,
   RecipeDetail,
   User,
+  TastingWordsResponse,
+  MethodPopItem,
 } from '../types';
 
 // ─── Auth token management ──────────────────────────────────────────────────
@@ -163,6 +165,16 @@ export const authApi = {
     }),
 
   me: () => request<User>('/api/auth/me'),
+};
+
+// ─── Stats / Data Insights ─────────────────────────────────────────────────
+
+export const statsApi = {
+  getTastingWords: () =>
+    request<TastingWordsResponse>('/api/stats/tasting-words'),
+
+  getMethodPopularity: () =>
+    request<MethodPopItem[]>('/api/stats/method-popularity'),
 };
 
 // ─── Recipes ────────────────────────────────────────────────────────────────
