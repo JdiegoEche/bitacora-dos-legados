@@ -60,4 +60,22 @@ describe('index.html — structure and content', () => {
   it('page title is brand-appropriate', () => {
     expect(html).toMatch(/<title>Bitácora Café/);
   });
+
+  // --- PWA meta tags (REQ-10) ---
+
+  it('includes manifest <link>', () => {
+    expect(html).toMatch(/<link\s+rel="manifest"\s+href="\/manifest\.webmanifest">/);
+  });
+
+  it('includes theme-color meta tag with #292524', () => {
+    expect(html).toMatch(/<meta\s+name="theme-color"\s+content="#292524">/);
+  });
+
+  it('includes apple-mobile-web-app-capable meta tag', () => {
+    expect(html).toMatch(/<meta\s+name="apple-mobile-web-app-capable"\s+content="yes">/);
+  });
+
+  it('includes apple-mobile-web-app-status-bar-style meta tag', () => {
+    expect(html).toMatch(/<meta\s+name="apple-mobile-web-app-status-bar-style"\s+content="black-translucent">/);
+  });
 });
