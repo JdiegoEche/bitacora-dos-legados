@@ -42,12 +42,12 @@ main ← PR #4 (integration tests)
 
 ## Phase 2: Backend Share API
 
-- [ ] 2.1 Modify `backend/src/db/schema.ts` — Add `shareToken TEXT UNIQUE` + `isPublic INTEGER DEFAULT 0` to brewSessions
-- [ ] 2.2 Generate + run Drizzle migration for new columns
-- [ ] 2.3 Modify `backend/src/services/brew-service.ts` — Add `toggleShare(id, userId, isPublic)` + `getByShareToken(token)`
-- [ ] 2.4 Modify `backend/src/routes/brews.ts` — Add `PATCH /:id/share` (auth-scoped, 404 if not owner)
-- [ ] 2.5 Create `backend/src/routes/public.ts` — `GET /:shareToken` returning brew + coffee bean + tasting notes
-- [ ] 2.6 Modify `backend/src/index.ts` — Register publicBrewRouter at `/api/public/brews`
+- [x] 2.1 Modify `backend/src/db/schema.ts` — Add `shareToken TEXT UNIQUE` + `isPublic INTEGER DEFAULT 0` to brewSessions
+- [x] 2.2 Generate + run Drizzle migration for new columns
+- [x] 2.3 Modify `backend/src/services/brew-service.ts` — Add `toggleShare(id, userId, isPublic)` + `getByShareToken(token)`
+- [x] 2.4 Modify `backend/src/routes/brews.ts` — Add `PATCH /:id/share` (auth-scoped, 404 if not owner)
+- [x] 2.5 Create `backend/src/routes/public.ts` — `GET /:shareToken` returning brew + coffee bean + tasting notes
+- [x] 2.6 Modify `backend/src/index.ts` — Register publicBrewRouter at `/api/public/brews`
 
 ## Phase 3: Frontend UI
 

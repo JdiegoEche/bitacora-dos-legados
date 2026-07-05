@@ -26,6 +26,52 @@ export const brewService = {
     return result ?? null;
   },
 
+  async toggleShare(
+    id: number,
+    userId: number,
+    isPublic: boolean,
+  ): Promise<{ isPublic: boolean; shareToken: string | null } | null> {
+    // Generate a new token each time sharing is enabled (token rotation).
+    // This revokes any previous public link — intentional security property.
+    const shareToken = isPublic ? crypto.randomUUID() : null;
+
+    const [updated] = await db
+      .update(brewSessions)
+      .set({
+        isPublic: isPublic ? 1 : 0,
+        shareToken,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(and(eq(brewSessions.id, id), eq(brewSessions.userId, userId)))
+      .returning();
+
+    if (!updated) return null;
+
+    return {
+      isPublic: updated.isPublic === 1,
+      shareToken: updated.shareToken ?? null,
+    };
+  },
+
+  async getByShareToken(
+    shareToken: string,
+  ): Promise<BrewSessionDetail | null> {
+    const result = await db.query.brewSessions.findFirst({
+      where: and(
+        eq(brewSessions.shareToken, shareToken),
+        eq(brewSessions.isPublic, 1),
+      ),
+      with: {
+        coffeeBean: true,
+        tastingNotes: {
+          orderBy: (notes, { asc }) => [asc(notes.createdAt)],
+        },
+      },
+    });
+
+    return result ?? null;
+  },
+
   async create(
     data: typeof brewSessions.$inferInsert,
     userId: number,

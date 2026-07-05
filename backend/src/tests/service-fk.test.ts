@@ -51,6 +51,8 @@ beforeAll(async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       coffee_bean_id INTEGER REFERENCES coffee_beans(id) ON DELETE SET NULL,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      share_token TEXT UNIQUE,
+      is_public INTEGER NOT NULL DEFAULT 0,
       grind_size TEXT,
       water_temp INTEGER,
       brew_time INTEGER,

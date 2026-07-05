@@ -37,6 +37,8 @@ export const brewSessions = sqliteTable('brew_sessions', {
     onDelete: 'set null',
   }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  shareToken: text('share_token').unique(),
+  isPublic: integer('is_public').notNull().default(0),
   grindSize: text('grind_size'), // e.g. "medium", "fine", "coarse"
   waterTemp: integer('water_temp'), // Celsius
   brewTime: integer('brew_time'), // seconds

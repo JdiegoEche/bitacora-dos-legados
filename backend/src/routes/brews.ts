@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { authMiddleware } from '../middleware/auth';
 import { brewService } from '../services/brew-service';
-import { createBrewSchema, updateBrewSchema, idParamSchema } from '../lib/validators';
+import { createBrewSchema, updateBrewSchema, idParamSchema, shareSchema } from '../lib/validators';
 
 const brewRouter = new Hono();
 
@@ -55,6 +55,21 @@ brewRouter.put(
     );
     if (!brew) return c.json({ error: 'Brew session not found' }, 404);
     return c.json(brew);
+  },
+);
+
+// PATCH /api/brews/:id/share — toggle public sharing (only if owned)
+brewRouter.patch(
+  '/:id/share',
+  zValidator('param', idParamSchema),
+  zValidator('json', shareSchema),
+  async (c) => {
+    const userId = c.get('userId');
+    const { id } = c.req.valid('param');
+    const { isPublic } = c.req.valid('json');
+    const result = await brewService.toggleShare(id, userId, isPublic);
+    if (!result) return c.json({ error: 'Brew session not found' }, 404);
+    return c.json(result);
   },
 );
 
