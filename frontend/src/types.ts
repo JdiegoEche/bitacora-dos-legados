@@ -110,11 +110,7 @@ export interface TastingWordsResponse {
   acidity: WordFreq[];
 }
 
-export interface MethodPopItem {
-  method: string;
-  count: number;
-  avgRating: number | null;
-}
+
 
 // ─── Recipe Catalog ─────────────────────────────────────────────────────────
 

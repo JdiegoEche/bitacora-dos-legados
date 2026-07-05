@@ -83,6 +83,9 @@ beforeAll(async () => {
       rating TEXT,
       grinder TEXT,
       clicks TEXT,
+      is_public INTEGER NOT NULL DEFAULT 0,
+      share_token TEXT,
+      shared_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -390,123 +393,7 @@ describe('GET /api/stats/tasting-words', () => {
   });
 });
 
-// ─── Method Popularity Integration ───────────────────────────────────────────
 
-describe('GET /api/stats/method-popularity', () => {
-  it('returns methods sorted by count descending', async () => {
-    // Create 3 V60 brews with ratings
-    for (let i = 0; i < 3; i++) {
-      const brewRes = await app.request('/api/brews', {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'V60',
-          grindSize: 'medium',
-          waterTemp: 93,
-          brewTime: '150',
-          coffeeDose: 15,
-          waterDose: 250,
-        }),
-      });
-      const brew = await brewRes.json();
-
-      // Add tasting note with rating (4, 4, 5) → avg 4.33
-      await app.request(`/api/brews/${brew.id}/notes`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          aroma: 'floral',
-          rating: i === 2 ? 5 : 4,
-        }),
-      });
-    }
-
-    // Create 2 Aeropress brews with ratings (3, 4) → avg 3.5
-    for (let i = 0; i < 2; i++) {
-      const brewRes = await app.request('/api/brews', {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'Aeropress',
-          grindSize: 'fine',
-          waterTemp: 88,
-          brewTime: '120',
-          coffeeDose: 14,
-          waterDose: 200,
-        }),
-      });
-      const brew = await brewRes.json();
-
-      await app.request(`/api/brews/${brew.id}/notes`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          aroma: 'nutty',
-          rating: i === 0 ? 3 : 4,
-        }),
-      });
-    }
-
-    const res = await app.request('/api/stats/method-popularity', {
-      headers: authHeaders,
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-
-    // V60 should come before Aeropress (sorted by count DESC)
-    const v60Idx = body.findIndex((i: { method: string }) => i.method === 'V60');
-    const aeropressIdx = body.findIndex((i: { method: string }) => i.method === 'Aeropress');
-    expect(v60Idx).toBeLessThan(aeropressIdx);
-
-    const v60 = body[v60Idx];
-    const aeropress = body[aeropressIdx];
-
-    // Each method has at least the number of brews we just created
-    expect(v60.count).toBeGreaterThanOrEqual(3);
-    expect(aeropress.count).toBeGreaterThanOrEqual(2);
-
-    // V60 avg ~4.33 (ratings 4,4,5) and Aeropress avg 3.5 (ratings 3,4)
-    expect(v60.avgRating).toBeCloseTo(4.33, 1);
-    expect(aeropress.avgRating).toBe(3.5);
-  });
-
-  it('includes methods with null avgRating when no tasting notes', async () => {
-    // Create a French Press brew with no notes
-    await app.request('/api/brews', {
-      method: 'POST',
-      headers: { ...authHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'French Press',
-        grindSize: 'coarse',
-        waterTemp: 95,
-        brewTime: '240',
-        coffeeDose: 20,
-        waterDose: 350,
-      }),
-    });
-
-    const res = await app.request('/api/stats/method-popularity', {
-      headers: authHeaders,
-    });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-
-    const frenchPress = body.find(
-      (item: { method: string }) => item.method === 'French Press',
-    );
-    expect(frenchPress).toBeDefined();
-    expect(frenchPress.count).toBe(1);
-    expect(frenchPress.avgRating).toBeNull();
-  });
-
-  it('returns empty array for user with no brews', async () => {
-    const res = await app.request('/api/stats/method-popularity', {
-      headers: emptyUserHeaders,
-    });
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual([]);
-  });
-});
 
 // ─── Auth Tests ──────────────────────────────────────────────────────────────
 
@@ -518,10 +405,5 @@ describe('Auth — 401 without JWT', () => {
     expect(body.error).toBeDefined();
   });
 
-  it('GET /api/stats/method-popularity returns 401 without auth', async () => {
-    const res = await app.request('/api/stats/method-popularity');
-    expect(res.status).toBe(401);
-    const body = await res.json();
-    expect(body.error).toBeDefined();
-  });
+
 });

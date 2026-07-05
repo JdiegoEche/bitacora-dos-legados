@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { statsApi } from '../api/client';
-import '../lib/chart-config';
 
 // ─── Helpers ────────────────────────────────────────────────────────
 

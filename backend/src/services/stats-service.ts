@@ -1,6 +1,6 @@
 import { db } from '../db/connection';
-import { tastingNotes, brewSessions } from '../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { tastingNotes } from '../db/schema';
+import { eq } from 'drizzle-orm';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -14,12 +14,6 @@ export interface TastingWordsResponse {
   flavor: WordFreq[];
   body: WordFreq[];
   acidity: WordFreq[];
-}
-
-export interface MethodPopItem {
-  method: string;
-  count: number;
-  avgRating: number | null;
 }
 
 // ─── Stopwords ──────────────────────────────────────────────────────────────
@@ -111,27 +105,4 @@ export async function getTastingWords(
   };
 }
 
-export async function getMethodPopularity(
-  userId: number,
-): Promise<MethodPopItem[]> {
-  const rows = await db
-    .select({
-      method: brewSessions.method,
-      count: sql<number>`COUNT(DISTINCT ${brewSessions.id})`.as('count'),
-      avgRating: sql<number | null>`AVG(${tastingNotes.rating})`.as('avg_rating'),
-    })
-    .from(brewSessions)
-    .leftJoin(
-      tastingNotes,
-      eq(brewSessions.id, tastingNotes.brewSessionId),
-    )
-    .where(eq(brewSessions.userId, userId))
-    .groupBy(brewSessions.method)
-    .orderBy(sql`count DESC`);
 
-  return rows.map((row) => ({
-    method: row.method,
-    count: Number(row.count),
-    avgRating: row.avgRating !== null ? Number(row.avgRating.toFixed(1)) : null,
-  }));
-}

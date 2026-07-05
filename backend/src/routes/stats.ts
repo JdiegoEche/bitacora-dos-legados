@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { authMiddleware } from '../middleware/auth';
-import { getTastingWords, getMethodPopularity } from '../services/stats-service';
+import { getTastingWords } from '../services/stats-service';
 
 const statsRouter = new Hono();
 
@@ -11,13 +11,6 @@ statsRouter.use('*', authMiddleware);
 statsRouter.get('/tasting-words', async (c) => {
   const userId = c.get('userId');
   const result = await getTastingWords(userId);
-  return c.json(result);
-});
-
-// GET /api/stats/method-popularity — method count + avg rating sorted by count
-statsRouter.get('/method-popularity', async (c) => {
-  const userId = c.get('userId');
-  const result = await getMethodPopularity(userId);
   return c.json(result);
 });
 
