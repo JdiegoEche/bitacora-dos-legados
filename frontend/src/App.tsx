@@ -15,6 +15,7 @@ const BeanDetail = lazy(() => import('./components/BeanDetail'));
 const RecipeMethodGrid = lazy(() => import('./components/recipes/RecipeMethodGrid'));
 const RecipeList = lazy(() => import('./components/recipes/RecipeList'));
 const RecipeDetail = lazy(() => import('./components/recipes/RecipeDetail'));
+const SharedBrewView = lazy(() => import('./components/SharedBrewView'));
 
 // ─── Route Wrappers ──────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/recetas/:method/:id" element={<RecipeDetail />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
+            <Route path="/shared/brews/:shareToken" element={<SharedBrewView />} />
           </Routes>
         </Suspense>
       </ThemeProvider>

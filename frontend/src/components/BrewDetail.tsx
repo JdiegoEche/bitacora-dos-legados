@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { brewsApi } from '../api/client';
+import BrewDetailSkeleton from './skeletons/BrewDetailSkeleton';
 import TastingNotesList from './TastingNotesList';
+import { useToast } from '../contexts/ToastContext';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -25,6 +27,7 @@ export default function BrewDetail() {
   const brewId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const {
     data: brew,
@@ -44,11 +47,38 @@ export default function BrewDetail() {
     },
   });
 
+  const shareMutation = useMutation({
+    mutationFn: (isPublic: boolean) => brewsApi.toggleShare(brewId, isPublic),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['brew', brewId] });
+      toast.success(
+        variables
+          ? 'Preparación compartida correctamente.'
+          : 'Preparación ya no está compartida.',
+      );
+    },
+    onError: (err: Error) => {
+      toast.error(`Error al compartir: ${err.message}`);
+    },
+  });
+
+  const handleShare = () => shareMutation.mutate(true);
+  const handleUnshare = () => shareMutation.mutate(false);
+
+  const handleCopyLink = () => {
+    if (brew?.shareToken) {
+      navigator.clipboard.writeText(
+        `${window.location.origin}/shared/brews/${brew.shareToken}`,
+      );
+      toast.success('Link copiado al portapapeles.');
+    }
+  };
+
   if (Number.isNaN(brewId)) {
     return <div className="state-error">Invalid brew ID.</div>;
   }
 
-  if (isLoading) return <div className="state-msg">Loading…</div>;
+  if (isLoading) return <BrewDetailSkeleton />;
 
   if (error || !brew) {
     return (
@@ -102,9 +132,47 @@ export default function BrewDetail() {
         )}
       </div>
 
+      {/* ── Share section ── */}
+      <div className="share-section">
+        <h3>Compartir preparación</h3>
+        {!brew.isPublic ? (
+          <button
+            onClick={handleShare}
+            className="btn"
+            disabled={shareMutation.isPending}
+          >
+            {shareMutation.isPending ? 'Compartiendo…' : '🔗 Compartir'}
+          </button>
+        ) : (
+          <div>
+            <p className="share-info">✅ Pública — cualquiera con el link puede verla</p>
+            {brew.shareToken && (
+              <div className="share-link-row">
+                <input
+                  readOnly
+                  value={`${window.location.origin}/shared/brews/${brew.shareToken}`}
+                  className="input"
+                />
+                <button onClick={handleCopyLink} className="btn">
+                  Copiar
+                </button>
+              </div>
+            )}
+            <button
+              onClick={handleUnshare}
+              className="btn btn-secondary"
+              disabled={shareMutation.isPending}
+              style={{ marginTop: '0.5rem' }}
+            >
+              Dejar de compartir
+            </button>
+          </div>
+        )}
+      </div>
+
       {brew.notes && (
         <div className="detail-notes">
-          <h3>Brew Notes</h3>
+          <h3>Notas</h3>
           <p>{brew.notes}</p>
         </div>
       )}
