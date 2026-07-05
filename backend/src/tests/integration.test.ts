@@ -67,6 +67,8 @@ beforeAll(async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       coffee_bean_id INTEGER REFERENCES coffee_beans(id) ON DELETE SET NULL,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      share_token TEXT UNIQUE,
+      is_public INTEGER NOT NULL DEFAULT 0,
       grind_size TEXT,
       water_temp INTEGER,
       brew_time INTEGER,
@@ -123,6 +125,7 @@ beforeAll(async () => {
   const { default: beanRouter } = await import('../routes/beans');
   const { default: noteRouter } = await import('../routes/notes');
   const { default: recipeRouter } = await import('../routes/recipes');
+  const { default: publicBrewRouter } = await import('../routes/public');
   const { cors } = await import('hono/cors');
 
   // Build the Hono app (same structure as index.ts but without server startup)
@@ -133,10 +136,19 @@ beforeAll(async () => {
   app.route('/api/beans', beanRouter);
   app.route('/api', noteRouter);
   app.route('/api/recipes', recipeRouter);
+  app.route('/api/public/brews', publicBrewRouter);
   app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
   // Create test user and get auth headers for protected routes
   authHeaders = await getAuthHeader('integration-test@test.com');
+});
+
+// ─── Second user for auth scoping tests ─────────────────────────────────────
+
+let otherUserHeaders: Record<string, string>;
+
+beforeAll(async () => {
+  otherUserHeaders = await getAuthHeader('other-user@test.com');
 });
 
 afterAll(async () => {
@@ -595,6 +607,146 @@ describe('GET /api/beans/:id/brews', () => {
     expect(res.status).toBe(200);
     const brews = await res.json();
     expect(brews).toEqual([]);
+  });
+});
+
+// ─── Brew Sharing Tests ─────────────────────────────────────────────────────
+// These tests exercise the share toggle (PATCH /api/brews/:id/share) and
+// the public brew endpoint (GET /api/public/brews/:shareToken).
+
+describe('PATCH /api/brews/:id/share', () => {
+  let brewId: number;
+
+  beforeAll(async () => {
+    // Create a brew to share
+    const res = await app.request('/api/brews', {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'V60',
+        grindSize: 'medium',
+        waterTemp: 93,
+        brewTime: '150',
+        coffeeDose: 15,
+        waterDose: 250,
+      }),
+    });
+    const brew = await res.json();
+    brewId = brew.id;
+  });
+
+  it('enables sharing and returns shareToken', async () => {
+    const res = await app.request(`/api/brews/${brewId}/share`, {
+      method: 'PATCH',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: true }),
+    });
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.isPublic).toBe(true);
+    expect(typeof body.shareToken).toBe('string');
+    expect(body.shareToken).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  it('disables sharing and clears shareToken', async () => {
+    const res = await app.request(`/api/brews/${brewId}/share`, {
+      method: 'PATCH',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: false }),
+    });
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.isPublic).toBe(false);
+    expect(body.shareToken).toBeNull();
+  });
+
+  it('returns 404 for another user\'s brew', async () => {
+    const res = await app.request(`/api/brews/${brewId}/share`, {
+      method: 'PATCH',
+      headers: { ...otherUserHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: true }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 when isPublic is not a boolean', async () => {
+    const res = await app.request(`/api/brews/${brewId}/share`, {
+      method: 'PATCH',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: 'not-a-boolean' }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/public/brews/:shareToken', () => {
+  let shareToken: string;
+  let sharedBrewId: number;
+
+  beforeAll(async () => {
+    // Create a brew and enable sharing to get a valid token
+    const brewRes = await app.request('/api/brews', {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'Aeropress',
+        grindSize: 'fine',
+        waterTemp: 88,
+        brewTime: '120',
+        coffeeDose: 14,
+        waterDose: 200,
+      }),
+    });
+    const brew = await brewRes.json();
+    sharedBrewId = brew.id;
+
+    const shareRes = await app.request(`/api/brews/${brew.id}/share`, {
+      method: 'PATCH',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: true }),
+    });
+    const shareBody = await shareRes.json();
+    shareToken = shareBody.shareToken;
+  });
+
+  it('returns brew with coffee bean and tasting notes for valid token', async () => {
+    const res = await app.request(`/api/public/brews/${shareToken}`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.method).toBe('Aeropress');
+    expect(Array.isArray(body.tastingNotes)).toBe(true);
+  });
+
+  it('returns 404 for invalid share token', async () => {
+    const res = await app.request('/api/public/brews/invalid-token-123', {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBe('Brew not found or not shared');
+  });
+
+  it('returns 404 after sharing is disabled', async () => {
+    // Disable sharing using the stored brew ID
+    await app.request(`/api/brews/${sharedBrewId}/share`, {
+      method: 'PATCH',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: false }),
+    });
+
+    const res = await app.request(`/api/public/brews/${shareToken}`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBe('Brew not found or not shared');
   });
 });
 

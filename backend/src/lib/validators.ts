@@ -52,6 +52,16 @@ export const brewIdParamSchema = z.object({
   brewId: z.coerce.number().int().positive('brewId must be a positive integer'),
 });
 
+// ─── Brew Sharing ────────────────────────────────────────────────────────────
+
+export const shareSchema = z.object({
+  isPublic: z.boolean(),
+});
+
+export const shareTokenParamSchema = z.object({
+  shareToken: z.string().min(1, 'Share token is required'),
+});
+
 // ─── Recipe Catalog ─────────────────────────────────────────────────────────
 
 const recipeMethods = ['v60', 'aeropress', 'chemex', 'kalitawave', 'origami', 'switch'] as const;

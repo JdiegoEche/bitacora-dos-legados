@@ -1,0 +1,18 @@
+# openspec/changes/bean-crud-complete/state.yaml
+schema: change-state
+change: bean-crud-complete
+created: 2026-07-05
+status: ready-for-apply
+phases:
+  exploration: completed
+  proposal: completed
+  spec: completed
+  design: completed
+  tasks: completed
+  apply: pending
+  verify: pending
+  archive: pending
+next_recommended: apply
+chain_strategy: stacked-to-main
+current_pr: 1
+total_prs: 4
