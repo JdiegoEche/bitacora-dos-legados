@@ -51,19 +51,27 @@ main ← PR #4 (integration tests)
 
 ## Phase 3: Frontend UI
 
-- [ ] 3.1 Modify `frontend/src/components/BeanDetail.tsx` — Add Edit (BeanForm modal pre-filled) + Delete (confirm → API → redirect + toast)
-- [ ] 3.2 Modify `frontend/src/components/BrewDetail.tsx` — Add Share toggle showing public URL + skeleton
-- [ ] 3.3 Modify `frontend/src/components/BitacoraHome.tsx` — Replace loading text with BitacoraHomeSkeleton
+- [x] 3.1 Modify `frontend/src/components/BeanDetail.tsx` — Add Edit (BeanForm modal pre-filled) + Delete (confirm → API → redirect + toast)
+- [x] 3.2 Modify `frontend/src/components/BrewDetail.tsx` — Add Share toggle showing public URL + skeleton
+- [x] 3.3 Modify `frontend/src/components/BitacoraHome.tsx` — Replace loading text with BitacoraHomeSkeleton
 - [x] 3.4 Modify `frontend/src/components/Layout.tsx` — Wrap with `<ToastProvider>`
-- [ ] 3.5 Create `frontend/src/components/SharedBrewView.tsx` — Public read-only brew page from public endpoint
-- [ ] 3.6 Modify `frontend/src/App.tsx` — Add `/shared/brews/:shareToken` route
+- [x] 3.5 Create `frontend/src/components/SharedBrewView.tsx` — Public read-only brew page from public endpoint
+- [x] 3.6 Modify `frontend/src/App.tsx` — Add `/shared/brews/:shareToken` route
 
 ## Phase 4: API Client & Types
 
-- [ ] 4.1 Modify `frontend/src/api/client.ts` — Add `brewsApi.toggleShare(id, isPublic)` + `brewsApi.getPublic(shareToken)`
-- [ ] 4.2 Modify `frontend/src/types.ts` — Add shared brew response types (brew + bean + notes)
+- [x] 4.1 Modify `frontend/src/api/client.ts` — Add `brewsApi.toggleShare(id, isPublic)` + `brewsApi.getPublic(shareToken)`
+- [x] 4.2 Modify `frontend/src/types.ts` — Add shared brew response types (brew + bean + notes)
 
 ## Phase 5: Testing
 
-- [ ] 5.1 Modify `backend/src/tests/integration.test.ts` — Tests for share toggle on/off, auth scoping, 404 for other user's brew
-- [ ] 5.2 Modify `backend/src/tests/integration.test.ts` — Tests for public endpoint: valid token returns 200 with brew+bean+notes, invalid returns 404
+- [x] 5.1 Modify `backend/src/tests/integration.test.ts` — Tests for share toggle on/off, auth scoping, 404 for other user's brew
+- [x] 5.2 Modify `backend/src/tests/integration.test.ts` — Tests for public endpoint: valid token returns 200 with brew+bean+notes, invalid returns 404
+
+## PR Plan (updated)
+
+| PR | Work Unit | Branch | Status |
+|----|-----------|--------|--------|
+| 1 | Toast + Skeleton infra | `feature/bean-crud-toast-skeleton` | ✅ Merged |
+| 2 | Backend share API | `feature/bean-crud-backend-share` | 🚀 PR open |
+| 3 | Frontend UI + wiring | `feature/bean-crud-frontend-ui` | 🚀 Pushed (waiting for PR 2 merge)
