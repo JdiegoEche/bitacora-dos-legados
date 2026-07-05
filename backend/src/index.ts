@@ -9,7 +9,6 @@ import beanRouter from './routes/beans';
 import noteRouter from './routes/notes';
 import recipeRouter from './routes/recipes';
 import publicBrewRouter from './routes/public';
-import statsRouter from './routes/stats';
 
 const app = new Hono();
 
@@ -25,7 +24,6 @@ app.route('/api/beans', beanRouter);
 app.route('/api', noteRouter);
 app.route('/api/recipes', recipeRouter);
 app.route('/api/public/brews', publicBrewRouter);
-app.route('/api/stats', statsRouter);
 
 // ─── Static frontend (production only) ──────────────────────────────────────
 

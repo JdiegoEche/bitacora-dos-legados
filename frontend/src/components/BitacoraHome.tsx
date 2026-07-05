@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { beansApi } from '../api/client';
 import BeanForm from './BeanForm';
 import BitacoraHomeSkeleton from './skeletons/BitacoraHomeSkeleton';
-import StatsPanel from './StatsPanel';
 import type { CoffeeBean } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -128,8 +127,6 @@ export default function BitacoraHome() {
       </div>
 
       <StatsSummary beans={beans} />
-
-      <StatsPanel />
 
       <div className="bean-card-grid">
         {beans.map((bean: CoffeeBean) => (

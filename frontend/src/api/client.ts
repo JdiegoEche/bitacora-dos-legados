@@ -11,7 +11,6 @@ import type {
   Recipe,
   RecipeDetail,
   User,
-  TastingWordsResponse,
 } from '../types';
 
 // ─── Auth token management ──────────────────────────────────────────────────
@@ -175,15 +174,6 @@ export const authApi = {
     }),
 
   me: () => request<User>('/api/auth/me'),
-};
-
-// ─── Stats / Data Insights ─────────────────────────────────────────────────
-
-export const statsApi = {
-  getTastingWords: () =>
-    request<TastingWordsResponse>('/api/stats/tasting-words'),
-
-
 };
 
 // ─── Recipes ────────────────────────────────────────────────────────────────

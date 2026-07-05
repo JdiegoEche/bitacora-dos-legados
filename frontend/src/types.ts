@@ -96,22 +96,6 @@ export interface SharedBrewResponse {
   brew: BrewSessionDetail;
 }
 
-// ─── Data Insights ──────────────────────────────────────────────────────────
-
-export interface WordFreq {
-  word: string;
-  count: number;
-}
-
-export interface TastingWordsResponse {
-  aroma: WordFreq[];
-  flavor: WordFreq[];
-  body: WordFreq[];
-  acidity: WordFreq[];
-}
-
-
-
 // ─── Recipe Catalog ─────────────────────────────────────────────────────────
 
 export interface RecipeStep {
