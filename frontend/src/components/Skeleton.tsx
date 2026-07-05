@@ -20,12 +20,13 @@ export default function Skeleton({
   height = '1rem',
   rounded = 'md',
   className = '',
+  style,
   ...rest
 }: SkeletonProps) {
   return (
     <div
       className={`skeleton skeleton-rounded-${rounded} ${className}`.trim()}
-      style={{ width, height }}
+      style={{ width, height, ...style }}
       aria-hidden="true"
       {...rest}
     />

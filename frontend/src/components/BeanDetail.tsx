@@ -1,7 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { beansApi } from '../api/client';
-import type { CoffeeBeanWithStats, BrewSessionWithNotes } from '../types';
+import BeanForm from './BeanForm';
+import BeanDetailSkeleton from './skeletons/BeanDetailSkeleton';
+import { useToast } from '../contexts/ToastContext';
+import type { CoffeeBean, CoffeeBeanWithStats, BrewSessionWithNotes } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -21,8 +25,9 @@ function formatRoast(level: string | null): string {
   return level || '—';
 }
 
-function formatRating(rating: number | null): string {
-  return rating != null ? `${rating}/5` : '—';
+function formatRating(rating: number | string | null): string {
+  const num = typeof rating === 'string' ? Number(rating) : rating;
+  return num != null ? `${num}/5` : '—';
 }
 
 function formatAvgRating(rating: number | null): string {
@@ -87,32 +92,38 @@ function BrewHistory({ brews }: { brews: BrewSessionWithNotes[] }) {
       <ol className="brew-history-list">
         {brews.map((brew) => (
           <li key={brew.id} className="brew-history-item">
-            <div className="brew-history-header">
-              <span className="brew-history-method">{brew.method}</span>
-              <span className="brew-history-date">
-                {formatDate(brew.createdAt)}
-              </span>
-              <span className="brew-history-rating">
-                {formatRating(brew.rating)}
-              </span>
-            </div>
-            <div className="brew-history-details">
-              <Field label="Molienda" value={brew.grindSize} />
-              <Field label="Temp. agua" value={formatTemp(brew.waterTemp)} />
-              <Field label="Café" value={formatGrams(brew.coffeeDose)} />
-              <Field label="Agua" value={formatMl(brew.waterDose)} />
-              <Field label="Tiempo" value={formatSeconds(brew.brewTime ? Number(brew.brewTime) : null)} />
-              <Field label="Molino" value={brew.grinder} />
-              <Field label="Clicks" value={brew.clicks} />
-            </div>
-            {brew.notes && (
-              <p className="brew-history-notes">{brew.notes}</p>
-            )}
-            {brew.tastingNotesSummary && (
-              <p className="tasting-notes-summary">
-                🗒 {brew.tastingNotesSummary}
-              </p>
-            )}
+            <Link
+              to={`/brews/${brew.id}`}
+              className="brew-history-link"
+            >
+              <div className="brew-history-header">
+                <span className="brew-history-method">{brew.method}</span>
+                <span className="brew-history-date">
+                  {formatDate(brew.createdAt)}
+                </span>
+                <span className="brew-history-rating">
+                  {formatRating(brew.rating)}
+                </span>
+              </div>
+              <div className="brew-history-details">
+                <Field label="Molienda" value={brew.grindSize} />
+                <Field label="Temp. agua" value={formatTemp(brew.waterTemp)} />
+                <Field label="Café" value={formatGrams(brew.coffeeDose)} />
+                <Field label="Agua" value={formatMl(brew.waterDose)} />
+                <Field label="Tiempo" value={formatSeconds(brew.brewTime ? Number(brew.brewTime) : null)} />
+                <Field label="Molino" value={brew.grinder} />
+                <Field label="Clicks" value={brew.clicks} />
+              </div>
+              {brew.notes && (
+                <p className="brew-history-notes">{brew.notes}</p>
+              )}
+              {brew.tastingNotesSummary && (
+                <p className="tasting-notes-summary">
+                  🗒 {brew.tastingNotesSummary}
+                </p>
+              )}
+              <span className="brew-history-chevron">→</span>
+            </Link>
           </li>
         ))}
       </ol>
@@ -134,6 +145,10 @@ function Field({ label, value }: { label: string; value: string | null }) {
 export default function BeanDetail() {
   const { id } = useParams<{ id: string }>();
   const beanId = Number(id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [editingBean, setEditingBean] = useState<CoffeeBean | null>(null);
 
   const {
     data: stats,
@@ -154,6 +169,24 @@ export default function BeanDetail() {
     enabled: !Number.isNaN(beanId),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => beansApi.delete(beanId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['beans'] });
+      navigate('/bitacora');
+      toast.success('Café eliminado correctamente.');
+    },
+    onError: (err: Error) => {
+      toast.error(`Error al eliminar: ${err.message}`);
+    },
+  });
+
+  const handleDelete = () => {
+    if (window.confirm('¿Eliminar este café? También se borrarán todas sus preparaciones.')) {
+      deleteMutation.mutate();
+    }
+  };
+
   if (Number.isNaN(beanId)) {
     return (
       <div className="state-msg state-error">ID de café inválido.</div>
@@ -161,7 +194,7 @@ export default function BeanDetail() {
   }
 
   if (statsLoading || brewsLoading) {
-    return <div className="state-msg">Cargando…</div>;
+    return <BeanDetailSkeleton />;
   }
 
   if (statsError) {
@@ -190,12 +223,27 @@ export default function BeanDetail() {
             {formatRoast(stats.roastLevel)}
           </p>
         </div>
-        <Link
-          to={`/bitacora/${beanId}/brews/new`}
-          className="btn"
-        >
-          + Nueva preparación
-        </Link>
+        <div className="detail-actions">
+          <button
+            className="btn"
+            onClick={() => setEditingBean(stats)}
+          >
+            Editar
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Eliminando…' : 'Eliminar'}
+          </button>
+          <Link
+            to={`/bitacora/${beanId}/brews/new`}
+            className="btn"
+          >
+            + Nueva preparación
+          </Link>
+        </div>
       </div>
 
       <StatsSection stats={stats} />
@@ -212,6 +260,13 @@ export default function BeanDetail() {
             + Nueva preparación
           </Link>
         </div>
+      )}
+
+      {editingBean && (
+        <BeanForm
+          bean={editingBean}
+          onClose={() => setEditingBean(null)}
+        />
       )}
     </div>
   );

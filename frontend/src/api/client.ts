@@ -108,6 +108,17 @@ export const brewsApi = {
 
   delete: (id: number) =>
     request<void>(`/api/brews/${id}`, { method: 'DELETE' }),
+
+  toggleShare: (id: number, isPublic: boolean) =>
+    request<{ isPublic: boolean; shareToken: string | null }>(`/api/brews/${id}/share`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublic }),
+    }),
+
+  getPublic: async (shareToken: string) => {
+    const brew = await request<BrewSessionDetail>(`/api/public/brews/${shareToken}`);
+    return { brew };
+  },
 };
 
 // ─── Beans ──────────────────────────────────────────────────────────────────

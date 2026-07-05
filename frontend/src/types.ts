@@ -19,6 +19,8 @@ export interface CoffeeBean {
 export interface BrewSession {
   id: number;
   coffeeBeanId: number | null;
+  shareToken: string | null;
+  isPublic: number;
   grindSize: string | null;
   waterTemp: number | null;
   brewTime: string | null;
@@ -88,6 +90,10 @@ export interface CreateNoteData {
   acidity?: string | null;
   rating?: number | null;
   freeText?: string | null;
+}
+
+export interface SharedBrewResponse {
+  brew: BrewSessionDetail;
 }
 
 // ─── Recipe Catalog ─────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { beansApi } from '../api/client';
 import BeanForm from './BeanForm';
+import BitacoraHomeSkeleton from './skeletons/BitacoraHomeSkeleton';
 import type { CoffeeBean } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -84,7 +85,7 @@ export default function BitacoraHome() {
   });
 
   if (isLoading) {
-    return <div className="state-msg">Cargando cafés…</div>;
+    return <BitacoraHomeSkeleton />;
   }
 
   if (error) {
