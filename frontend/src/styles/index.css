@@ -302,6 +302,25 @@ textarea.input {
   gap: 0.5rem;
 }
 
+@media (max-width: 640px) {
+  .detail-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .detail-actions {
+    flex-wrap: wrap;
+  }
+
+  .detail-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem;
+  }
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
