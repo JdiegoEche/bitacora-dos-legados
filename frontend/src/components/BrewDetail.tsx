@@ -96,7 +96,10 @@ export default function BrewDetail() {
 
   return (
     <div>
-      <BackLink label="Bitácora" />
+      <BackLink
+        label={brew.coffeeBeanId ? 'Café' : 'Bitácora'}
+        to={brew.coffeeBeanId ? `/bitacora/${brew.coffeeBeanId}` : '/bitacora'}
+      />
       <div className="detail-header">
         <h2>{brew.method} Brew</h2>
         <div className="detail-actions">

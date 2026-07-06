@@ -258,7 +258,7 @@ export default function BeanDetail() {
 
   return (
     <div>
-      <BackLink label="Bitácora" />
+      <BackLink label="Bitácora" to="/bitacora" />
       <div className="detail-header">
         <div>
           <h2>{stats.name}</h2>

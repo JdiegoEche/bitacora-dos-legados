@@ -9,11 +9,13 @@ export default function Layout() {
   const { user, isAuthenticated, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Cerrar menú al hacer click afuera
+  // Cerrar menú al hacer click afuera (pero no en el botón)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) && 
+          buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     }
@@ -34,6 +36,7 @@ export default function Layout() {
 
             {/* Hamburger — visible solo en mobile */}
             <button
+              ref={buttonRef}
               className="nav-hamburger"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
