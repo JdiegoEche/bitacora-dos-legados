@@ -28,7 +28,6 @@ interface FormState {
   waterDose: string;
   coffeeBeanId: string;
   notes: string;
-  rating: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -45,8 +44,13 @@ function createFormState(data?: CreateBrewData): FormState {
     waterDose: data?.waterDose ? String(data.waterDose) : '',
     coffeeBeanId: data?.coffeeBeanId ? String(data.coffeeBeanId) : '',
     notes: data?.notes ?? '',
-    rating: data?.rating ? String(data.rating) : '',
   };
+}
+
+function computeRatio(coffeeDose: number, waterDose: number): string | null {
+  if (!coffeeDose || !waterDose) return null;
+  const ratio = Math.round(waterDose / coffeeDose);
+  return `1:${ratio}`;
 }
 
 function toPayload(f: FormState, preSelectedBeanId?: number): CreateBrewData {
@@ -61,7 +65,7 @@ function toPayload(f: FormState, preSelectedBeanId?: number): CreateBrewData {
     waterDose: Number(f.waterDose),
     coffeeBeanId: preSelectedBeanId ?? (f.coffeeBeanId ? Number(f.coffeeBeanId) : null),
     notes: f.notes || null,
-    rating: f.rating || null,
+    rating: computeRatio(Number(f.coffeeDose), Number(f.waterDose)),
   };
 }
 
@@ -190,6 +194,24 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
         </div>
 
+        {!hasPreselected && (
+          <label className="field">
+            Coffee Bean
+            <select
+              value={form.coffeeBeanId}
+              onChange={(e) => set('coffeeBeanId', e.target.value)}
+              className="input"
+            >
+              <option value="">-- Select bean --</option>
+              {beans?.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.roaster})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <div className="field-row">
           <label className="field">
             Coffee Dose (g) *
@@ -218,34 +240,17 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
         </div>
 
-        {!hasPreselected && (
+        <div className="field-row">
           <label className="field">
-            Coffee Bean
-            <select
-              value={form.coffeeBeanId}
-              onChange={(e) => set('coffeeBeanId', e.target.value)}
-              className="input"
-            >
-              <option value="">-- Select bean --</option>
-              {beans?.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.roaster})
-                </option>
-              ))}
-            </select>
+            Ratio
+            <output className="input ratio-output">
+              {computeRatio(
+                Number(form.coffeeDose),
+                Number(form.waterDose),
+              ) ?? '—'}
+            </output>
           </label>
-        )}
-
-        <label className="field">
-          Rating
-          <input
-            type="text"
-            value={form.rating}
-            onChange={(e) => set('rating', e.target.value)}
-            className="input"
-            placeholder="1:15"
-          />
-        </label>
+        </div>
 
         <label className="field">
           Notes

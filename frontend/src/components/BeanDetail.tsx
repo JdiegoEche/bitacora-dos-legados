@@ -67,21 +67,6 @@ function StatsSection({ stats }: { stats: CoffeeBeanWithStats }) {
   );
 }
 
-function formatTemp(temp: number | null): string {
-  return temp != null ? `${temp}°C` : '—';
-}
-
-function formatSeconds(sec: number | null): string {
-  return sec != null ? `${sec}s` : '—';
-}
-
-function formatGrams(g: number | null): string {
-  return g != null ? `${g}g` : '—';
-}
-
-function formatMl(ml: number | null): string {
-  return ml != null ? `${ml}ml` : '—';
-}
 
 function BrewHistory({ brews }: { brews: BrewSessionWithNotes[] }) {
   if (brews.length === 0) {
@@ -174,15 +159,6 @@ function BrewHistory({ brews }: { brews: BrewSessionWithNotes[] }) {
         ))}
       </ol>
     </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <span className="brew-field">
-      <strong>{label}:</strong> {value}
-    </span>
   );
 }
 
