@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { brewsApi, beansApi } from '../api/client';
+import BackLink from './BackLink';
 import type { CreateBrewData } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -106,8 +107,17 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
   const set = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const backTo = brewId
+    ? `/brews/${brewId}`
+    : preSelectedBeanId
+      ? `/bitacora/${preSelectedBeanId}`
+      : '/bitacora';
+
+  const backLabel = brewId ? 'Preparación' : preSelectedBeanId ? 'Café' : 'Bitácora';
+
   return (
     <div>
+      <BackLink label={backLabel} to={backTo} />
       <h2>{isEdit ? 'Edit Brew Session' : 'New Brew Session'}</h2>
 
       <form onSubmit={handleSubmit} className="form">

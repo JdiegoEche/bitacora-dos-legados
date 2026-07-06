@@ -5,6 +5,7 @@ import { beansApi } from '../api/client';
 import BeanForm from './BeanForm';
 import BeanDetailSkeleton from './skeletons/BeanDetailSkeleton';
 import ConfirmDialog from './ConfirmDialog';
+import BackLink from './BackLink';
 import { useToast } from '../contexts/ToastContext';
 import type { CoffeeBean, CoffeeBeanWithStats, BrewSessionWithNotes } from '../types';
 
@@ -213,6 +214,7 @@ export default function BeanDetail() {
 
   return (
     <div>
+      <BackLink label="Bitácora" />
       <div className="detail-header">
         <div>
           <h2>{stats.name}</h2>

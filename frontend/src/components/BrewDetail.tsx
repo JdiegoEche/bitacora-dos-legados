@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { brewsApi } from '../api/client';
 import BrewDetailSkeleton from './skeletons/BrewDetailSkeleton';
 import ConfirmDialog from './ConfirmDialog';
+import BackLink from './BackLink';
 import TastingNotesList from './TastingNotesList';
 import { useToast } from '../contexts/ToastContext';
 
@@ -95,6 +96,7 @@ export default function BrewDetail() {
 
   return (
     <div>
+      <BackLink label="Bitácora" />
       <div className="detail-header">
         <h2>{brew.method} Brew</h2>
         <div className="detail-actions">

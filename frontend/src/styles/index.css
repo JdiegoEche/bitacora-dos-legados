@@ -269,6 +269,27 @@ textarea.input {
 
 /* ─── Detail page ────────────────────────────────────────────────────────── */
 
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-muted-fg);
+  text-decoration: none;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+  transition: color var(--transition-base);
+  min-height: 44px; /* ui-ux-pro-max: touch target ≥44pt */
+}
+
+.back-link:hover {
+  color: var(--color-gold);
+}
+
+.back-link svg {
+  flex-shrink: 0;
+}
+
 .detail-header {
   display: flex;
   justify-content: space-between;
