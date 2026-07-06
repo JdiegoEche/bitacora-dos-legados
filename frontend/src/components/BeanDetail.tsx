@@ -98,33 +98,77 @@ function BrewHistory({ brews }: { brews: BrewSessionWithNotes[] }) {
               to={`/brews/${brew.id}`}
               className="brew-history-link"
             >
-              <div className="brew-history-header">
-                <span className="brew-history-method">{brew.method}</span>
-                <span className="brew-history-date">
-                  {formatDate(brew.createdAt)}
-                </span>
-                <span className="brew-history-rating">
-                  {formatRating(brew.rating)}
-                </span>
+              <div className="brew-history-main">
+                <div className="brew-history-top">
+                  <span className="brew-history-method">{brew.method}</span>
+                  <span className="brew-history-date">
+                    {formatDate(brew.createdAt)}
+                  </span>
+                </div>
+
+                <div className="brew-history-params">
+                  {brew.grindSize && (
+                    <span className="brew-param">
+                      <span className="brew-param-label">Molienda</span>
+                      <span className="brew-param-value">{brew.grindSize}</span>
+                    </span>
+                  )}
+                  {brew.waterTemp != null && (
+                    <span className="brew-param">
+                      <span className="brew-param-label">Agua</span>
+                      <span className="brew-param-value">{brew.waterTemp}°C</span>
+                    </span>
+                  )}
+                  {brew.coffeeDose != null && (
+                    <span className="brew-param">
+                      <span className="brew-param-label">Café</span>
+                      <span className="brew-param-value">{brew.coffeeDose}g</span>
+                    </span>
+                  )}
+                  {brew.waterDose != null && (
+                    <span className="brew-param">
+                      <span className="brew-param-label">Volumen</span>
+                      <span className="brew-param-value">{brew.waterDose}ml</span>
+                    </span>
+                  )}
+                  {brew.brewTime && (
+                    <span className="brew-param">
+                      <span className="brew-param-label">Tiempo</span>
+                      <span className="brew-param-value">{brew.brewTime}s</span>
+                    </span>
+                  )}
+                  {brew.rating && (
+                    <span className="brew-param brew-param--rating">
+                      <span className="brew-param-label">Rating</span>
+                      <span className="brew-param-value">{formatRating(brew.rating)}</span>
+                    </span>
+                  )}
+                </div>
+
+                {brew.notes && (
+                  <p className="brew-history-notes">{brew.notes}</p>
+                )}
+                {brew.tastingNotesSummary && (
+                  <p className="tasting-notes-summary">
+                    {brew.tastingNotesSummary}
+                  </p>
+                )}
               </div>
-              <div className="brew-history-details">
-                <Field label="Molienda" value={brew.grindSize} />
-                <Field label="Temp. agua" value={formatTemp(brew.waterTemp)} />
-                <Field label="Café" value={formatGrams(brew.coffeeDose)} />
-                <Field label="Agua" value={formatMl(brew.waterDose)} />
-                <Field label="Tiempo" value={formatSeconds(brew.brewTime ? Number(brew.brewTime) : null)} />
-                <Field label="Molino" value={brew.grinder} />
-                <Field label="Clicks" value={brew.clicks} />
-              </div>
-              {brew.notes && (
-                <p className="brew-history-notes">{brew.notes}</p>
-              )}
-              {brew.tastingNotesSummary && (
-                <p className="tasting-notes-summary">
-                  🗒 {brew.tastingNotesSummary}
-                </p>
-              )}
-              <span className="brew-history-chevron">→</span>
+
+              <svg
+                className="brew-history-chevron"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </Link>
           </li>
         ))}
