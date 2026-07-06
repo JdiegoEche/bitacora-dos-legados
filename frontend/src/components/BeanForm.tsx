@@ -52,53 +52,52 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <h2>{isEdit ? 'Edit Bean' : 'Add New Bean'}</h2>
+        <h2>{isEdit ? 'Editar Café' : 'Agregar Café'}</h2>
 
         <label className="field">
-          Name *
+          Nombre *
           <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ethiopia Yirgacheffe"
+            placeholder="Dos legados tradicional"
             className="input"
           />
         </label>
 
         <label className="field">
-          Roaster *
+          Tostador
           <input
-            required
             value={roaster}
             onChange={(e) => setRoaster(e.target.value)}
-            placeholder="Counter Culture"
+            placeholder="Dos legados"
             className="input"
           />
         </label>
 
         <label className="field">
-          Origin
+          Origen
           <input
             value={origin}
             onChange={(e) => setOrigin(e.target.value)}
-            placeholder="Ethiopia"
+            placeholder="Colombia"
             className="input"
           />
         </label>
 
         <label className="field">
-          Roast Level
+          Nivel de tueste
           <select
             value={roastLevel}
             onChange={(e) => setRoastLevel(e.target.value)}
             className="input"
           >
-            <option value="">— Select —</option>
-            <option value="light">Light</option>
-            <option value="medium-light">Medium-Light</option>
-            <option value="medium">Medium</option>
-            <option value="medium-dark">Medium-Dark</option>
-            <option value="dark">Dark</option>
+            <option value="">— Seleccionar —</option>
+            <option value="light">Claro</option>
+            <option value="medium-light">Medio-Claro</option>
+            <option value="medium">Medio</option>
+            <option value="medium-dark">Medio con desarrollo</option>
+            <option value="dark">Alta</option>
           </select>
         </label>
 
@@ -110,14 +109,14 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
 
         <div className="modal-actions">
           <button type="button" onClick={onClose} className="btn btn-secondary">
-            Cancel
+            Cancelar
           </button>
           <button type="submit" disabled={mutation.isPending} className="btn">
             {mutation.isPending
-              ? 'Saving…'
+              ? 'Guardando…'
               : isEdit
-                ? 'Update Bean'
-                : 'Add Bean'}
+                ? 'Actualizar Café'
+                : 'Agregar Café'}
           </button>
         </div>
       </form>

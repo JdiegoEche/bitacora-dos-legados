@@ -64,8 +64,6 @@ describe('BrewForm — preSelectedBeanId', () => {
       <BrewForm preSelectedBeanId={1} />,
     );
 
-    // Should NOT show the Coffee Bean label
-    expect(screen.queryByText(/coffee bean/i)).not.toBeInTheDocument();
     // Should NOT render a standalone <select> for beans (the inline selector)
     const selects = screen.queryAllByRole('combobox');
     // No selects at all (rating is now a text input)
@@ -75,8 +73,8 @@ describe('BrewForm — preSelectedBeanId', () => {
   it('renders inline bean selector when preSelectedBeanId is NOT set', async () => {
     renderWithProviders(<BrewForm />);
 
-    // Should show the Coffee Bean label
-    expect(screen.getByText(/coffee bean/i)).toBeInTheDocument();
+    // Should show the Café label (select with accessible name "Café")
+    expect(screen.getByRole('combobox', { name: /café/i })).toBeInTheDocument();
     // Should render an inline <select> for bean selection
     const selects = screen.getAllByRole('combobox');
     // One select: only the bean selector (rating is now a text input)
@@ -91,7 +89,7 @@ describe('BrewForm — preSelectedBeanId', () => {
     renderWithProviders(<BrewForm />);
 
     await waitFor(() => {
-      expect(screen.getByText(/-- Select bean/i)).toBeInTheDocument();
+      expect(screen.getByText(/-- Seleccionar café/i)).toBeInTheDocument();
     });
   });
 
@@ -106,14 +104,14 @@ describe('BrewForm — preSelectedBeanId', () => {
       'V60',
     );
     await userEvent.type(
-      screen.getByPlaceholderText(/medium, fine/i),
+      screen.getByPlaceholderText(/media, fina/i),
       'medium',
     );
     // Water temp
     const numberInputs = screen.getAllByRole('spinbutton');
     await userEvent.type(numberInputs[0], '93');
     // Brew time — find the text input inside the "Brew Time *" label
-    const brewTimeInput = screen.getByRole('textbox', { name: /brew time/i });
+    const brewTimeInput = screen.getByRole('textbox', { name: /tiempo/i });
     await userEvent.type(brewTimeInput, '2:30');
     // Coffee dose
     await userEvent.type(numberInputs[1], '15');
@@ -121,7 +119,7 @@ describe('BrewForm — preSelectedBeanId', () => {
     await userEvent.type(numberInputs[2], '250');
 
     // Submit
-    await userEvent.click(screen.getByRole('button', { name: /save brew/i }));
+    await userEvent.click(screen.getByText('Guardar'));
 
     await waitFor(() => {
       expect(brewsApi.create).toHaveBeenCalledWith(

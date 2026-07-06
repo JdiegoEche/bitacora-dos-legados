@@ -117,21 +117,21 @@ export default function BrewDetail() {
       </div>
 
       <div className="detail-grid">
-        <Field label="Date" value={formatDate(brew.createdAt)} />
-        <Field label="Method" value={brew.method} />
-        <Field label="Grind Size" value={brew.grindSize || '—'} />
-        <Field label="Water Temp" value={brew.waterTemp ? `${brew.waterTemp}°C` : '—'} />
-        <Field label="Brew Time" value={brew.brewTime ? `${brew.brewTime}s` : '—'} />
-        <Field label="Coffee Dose" value={brew.coffeeDose ? `${brew.coffeeDose}g` : '—'} />
-        <Field label="Water Dose" value={brew.waterDose ? `${brew.waterDose}g` : '—'} />
+        <Field label="Fecha" value={formatDate(brew.createdAt)} />
+        <Field label="Método" value={brew.method} />
+        <Field label="Molienda" value={brew.grindSize || '—'} />
+        <Field label="Temp. agua" value={brew.waterTemp ? `${brew.waterTemp}°C` : '—'} />
+        <Field label="Tiempo" value={brew.brewTime ? `${brew.brewTime}s` : '—'} />
+        <Field label="Café" value={brew.coffeeDose ? `${brew.coffeeDose}g` : '—'} />
+        <Field label="Agua" value={brew.waterDose ? `${brew.waterDose}g` : '—'} />
         <Field label="Rating" value={stars(brew.rating ? Number(brew.rating) : null)} />
 
         {brew.coffeeBean && (
           <Field
-            label="Coffee Bean"
+            label="Café"
             value={`${brew.coffeeBean.name} (${brew.coffeeBean.roaster})${
               brew.coffeeBean.roastLevel
-                ? ` — ${brew.coffeeBean.roastLevel} roast`
+                ? ` — ${brew.coffeeBean.roastLevel} tostado`
                 : ''
             }`}
           />

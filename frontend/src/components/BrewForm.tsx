@@ -122,11 +122,11 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
   return (
     <div>
       <BackLink label={backLabel} to={backTo} />
-      <h2>{isEdit ? 'Edit Brew Session' : 'New Brew Session'}</h2>
+      <h2>{isEdit ? 'Editar preparación' : 'Nueva preparación'}</h2>
 
       <form onSubmit={handleSubmit} className="form">
         <label className="field">
-          Method *
+          Método *
           <input
             required
             value={form.method}
@@ -137,19 +137,19 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
         </label>
 
         <label className="field">
-          Grind Size *
+          Molienda *
           <input
             required
             value={form.grindSize}
             onChange={(e) => set('grindSize', e.target.value)}
-            placeholder="medium, fine, coarse…"
+            placeholder="media, fina, gruesa…"
             className="input"
           />
         </label>
 
         <div className="field-row">
           <label className="field">
-            Water Temp (°C) *
+            Temp. agua (°C) *
             <input
               required
               type="number"
@@ -161,7 +161,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
 
           <label className="field">
-            Brew Time *
+            Tiempo *
             <input
               required
               type="text"
@@ -196,13 +196,13 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
 
         {!hasPreselected && (
           <label className="field">
-            Coffee Bean
+            Café
             <select
               value={form.coffeeBeanId}
               onChange={(e) => set('coffeeBeanId', e.target.value)}
               className="input"
             >
-              <option value="">-- Select bean --</option>
+              <option value="">-- Seleccionar café --</option>
               {beans?.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} ({b.roaster})
@@ -214,7 +214,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
 
         <div className="field-row">
           <label className="field">
-            Coffee Dose (g) *
+            Café (g) *
             <input
               required
               type="number"
@@ -227,7 +227,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
 
           <label className="field">
-            Water Dose (g) *
+            Agua (g) *
             <input
               required
               type="number"
@@ -253,7 +253,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
         </div>
 
         <label className="field">
-          Notes
+          Notas
           <textarea
             value={form.notes}
             onChange={(e) => set('notes', e.target.value)}
@@ -270,10 +270,10 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
 
         <button type="submit" disabled={mutation.isPending} className="btn">
           {mutation.isPending
-            ? 'Saving…'
+            ? 'Guardando…'
             : isEdit
-              ? 'Update Brew'
-              : 'Save Brew'}
+              ? 'Actualizar'
+              : 'Guardar'}
         </button>
       </form>
     </div>

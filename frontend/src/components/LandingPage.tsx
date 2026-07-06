@@ -92,8 +92,7 @@ export default function LandingPage() {
           </div>
           <h3 className="cta-title">Diario</h3>
           <p className="cta-desc">
-            Llevá un registro personal de cada cafeína del día con notas,
-            estados de ánimo y momentos.
+            Llevá un registro personal
           </p>
           <span className="cta-badge">Próximamente</span>
         </div>
