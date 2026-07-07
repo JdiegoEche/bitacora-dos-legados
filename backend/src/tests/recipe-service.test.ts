@@ -1,81 +1,38 @@
-import { beforeAll, afterAll, beforeEach, describe, it, expect } from 'vitest';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import Database from 'better-sqlite3';
+import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
+import { createTestDb, destroyTestDb } from '../db/test-helper';
+import type { TestDb } from '../db/test-helper';
+import * as schema from '../db/schema';
+
+// ─── Mock DB connection ──────────────────────────────────────────────────────
+
+let testDb: TestDb;
+
+vi.mock('../db/connection', () => ({
+  get db() { return testDb; },
+}));
 
 // ─── Setup ──────────────────────────────────────────────────────────────────
 
-let testDir: string;
-
 beforeAll(async () => {
-  testDir = mkdtempSync(join(tmpdir(), 'bitacora-recipe-svc-'));
-  const dbPath = join(testDir, 'test.db');
-
-  // Create database and tables
-  const sqlite = new Database(dbPath);
-  sqlite.pragma('journal_mode = WAL');
-  sqlite.pragma('foreign_keys = ON');
-
-  sqlite.exec(`
-    CREATE TABLE recipes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      method TEXT NOT NULL,
-      name TEXT NOT NULL,
-      objective TEXT,
-      preparation TEXT NOT NULL DEFAULT '',
-      coffee_dose REAL NOT NULL,
-      water_dose REAL NOT NULL,
-      ratio TEXT NOT NULL,
-      temperature TEXT NOT NULL,
-      grind_size TEXT NOT NULL,
-      total_time TEXT NOT NULL,
-      profile TEXT NOT NULL,
-      steps TEXT NOT NULL DEFAULT '[]',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  sqlite.close();
-
-  // Set env BEFORE importing modules that read it
-  process.env.DATABASE_URL = dbPath;
+  testDb = await createTestDb();
 });
 
-afterAll(async () => {
-  try {
-    const { db } = await import('../db/connection');
-    if ('session' in db && typeof (db as any).session?.close === 'function') {
-      (db as any).session.close();
-    }
-  } catch {
-    // Best effort
-  }
-
-  await new Promise((r) => setTimeout(r, 100));
-
-  if (existsSync(testDir)) {
-    try {
-      rmSync(testDir, { recursive: true, force: true });
-    } catch {
-      // Windows EBUSY
-    }
-  }
-  delete process.env.DATABASE_URL;
+afterAll(() => {
+  destroyTestDb();
 });
 
 // Clean table between tests for isolation
 beforeEach(async () => {
-  const { db } = await import('../db/connection');
-  const { recipes } = await import('../db/schema');
-  await db.delete(recipes);
+  await testDb.delete(schema.recipes);
 });
 
 // ─── Test Data ───────────────────────────────────────────────────────────────
 
-const recipeV60 = {
-  method: 'v60',
-  name: 'Classic V60',
+const sampleRecipe = {
+  method: 'v60' as const,
+  name: 'Test V60',
+  objective: 'A simple test recipe',
+  preparation: 'Boil water, grind coffee, brew',
   coffeeDose: 15,
   waterDose: 250,
   ratio: '1:16.7',
@@ -83,16 +40,17 @@ const recipeV60 = {
   grindSize: 'medium',
   totalTime: '2:30',
   profile: 'bright',
-  objective: 'Bright and clean cup',
   steps: JSON.stringify([
-    { stepOrder: 1, instruction: 'Bloom with 50ml water', waterAtStep: 50 },
-    { stepOrder: 2, instruction: 'Pour remaining water', waterAtStep: 200 },
+    { stepOrder: 1, instruction: 'Bloom with 50g water', waterAtStep: 50 },
+    { stepOrder: 2, instruction: 'Pour to 250g', waterAtStep: 250 },
   ]),
 };
 
-const recipeAeropress = {
-  method: 'aeropress',
-  name: 'Standard Aeropress',
+const sampleRecipe2 = {
+  method: 'aeropress' as const,
+  name: 'Test Aeropress',
+  objective: null,
+  preparation: '',
   coffeeDose: 14,
   waterDose: 200,
   ratio: '1:14.3',
@@ -100,90 +58,106 @@ const recipeAeropress = {
   grindSize: 'fine',
   totalTime: '1:30',
   profile: 'smooth',
-  objective: 'Quick smooth cup',
-  steps: JSON.stringify([]),
+  steps: '[]',
 };
 
 // ─── Service Tests ───────────────────────────────────────────────────────────
 
 describe('recipeService.list()', () => {
-  it('returns all recipes when no method filter is provided', async () => {
-    const { recipeService } = await import('../services/recipe-service');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
-
-    await db.insert(recipes).values(recipeV60);
-    await db.insert(recipes).values(recipeAeropress);
-
-    const result = await recipeService.list();
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(2);
-    const names = result.map((r) => r.name).sort();
-    expect(names).toEqual(['Classic V60', 'Standard Aeropress']);
-  });
-
   it('returns empty array when no recipes exist', async () => {
     const { recipeService } = await import('../services/recipe-service');
+    const recipes = await recipeService.list();
+    expect(recipes).toEqual([]);
+  });
 
-    const result = await recipeService.list();
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(0);
+  it('returns all recipes when no method filter is given', async () => {
+    const { recipeService } = await import('../services/recipe-service');
+
+    await testDb.insert(schema.recipes).values(sampleRecipe);
+    await testDb.insert(schema.recipes).values(sampleRecipe2);
+
+    const recipes = await recipeService.list();
+    expect(recipes).toHaveLength(2);
+    const names = recipes.map((r) => r.name).sort();
+    expect(names).toEqual(['Test Aeropress', 'Test V60']);
   });
 
   it('filters recipes by method when method param is provided', async () => {
     const { recipeService } = await import('../services/recipe-service');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
 
-    await db.insert(recipes).values(recipeV60);
-    await db.insert(recipes).values(recipeAeropress);
+    await testDb.insert(schema.recipes).values(sampleRecipe);
+    await testDb.insert(schema.recipes).values(sampleRecipe2);
 
-    const result = await recipeService.list('aeropress');
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(1);
-    expect(result[0].method).toBe('aeropress');
-    expect(result[0].name).toBe('Standard Aeropress');
+    const v60Recipes = await recipeService.list('v60');
+    expect(v60Recipes).toHaveLength(1);
+    expect(v60Recipes[0].name).toBe('Test V60');
+
+    const aeropressRecipes = await recipeService.list('aeropress');
+    expect(aeropressRecipes).toHaveLength(1);
+    expect(aeropressRecipes[0].name).toBe('Test Aeropress');
   });
 
-  it('returns empty array when method has no recipes', async () => {
+  it('returns steps field from list()', async () => {
     const { recipeService } = await import('../services/recipe-service');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
 
-    await db.insert(recipes).values(recipeV60);
+    await testDb.insert(schema.recipes).values(sampleRecipe);
 
-    const result = await recipeService.list('chemex');
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(0);
+    const recipes = await recipeService.list();
+    expect(recipes).toHaveLength(1);
+    expect(typeof recipes[0].steps).toBe('string');
+    expect(recipes[0].steps).toBe(sampleRecipe.steps);
+  });
+
+  it('returns empty array for non-existent method', async () => {
+    const { recipeService } = await import('../services/recipe-service');
+    await testDb.insert(schema.recipes).values(sampleRecipe);
+
+    const chemexRecipes = await recipeService.list('chemex');
+    expect(chemexRecipes).toEqual([]);
   });
 });
 
 describe('recipeService.getById()', () => {
-  it('returns a single recipe with parsed steps array', async () => {
+  it('returns a recipe by id', async () => {
     const { recipeService } = await import('../services/recipe-service');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
 
-    const [inserted] = await db
-      .insert(recipes)
-      .values(recipeV60)
-      .returning();
+    const [inserted] = await testDb.insert(schema.recipes).values(sampleRecipe).returning();
 
-    const result = await recipeService.getById(inserted.id);
-    expect(result).not.toBeNull();
-    expect(result!.name).toBe('Classic V60');
-    expect(result!.method).toBe('v60');
-    expect(Array.isArray(result!.steps)).toBe(true);
-    expect(result!.steps).toHaveLength(2);
-    expect(result!.steps[0].instruction).toBe('Bloom with 50ml water');
-    expect(result!.steps[0].waterAtStep).toBe(50);
-    expect(result!.steps[1].instruction).toBe('Pour remaining water');
+    const recipe = await recipeService.getById(inserted.id);
+    expect(recipe).not.toBeNull();
+    expect(recipe!.name).toBe('Test V60');
   });
 
   it('returns null for non-existent id', async () => {
     const { recipeService } = await import('../services/recipe-service');
+    const recipe = await recipeService.getById(999);
+    expect(recipe).toBeNull();
+  });
 
-    const result = await recipeService.getById(99999);
-    expect(result).toBeNull();
+  it('returns null for negative id', async () => {
+    const { recipeService } = await import('../services/recipe-service');
+    const recipe = await recipeService.getById(-1);
+    expect(recipe).toBeNull();
+  });
+
+  it('returns parsed steps as RecipeStep[]', async () => {
+    const { recipeService } = await import('../services/recipe-service');
+
+    const [inserted] = await testDb.insert(schema.recipes).values(sampleRecipe).returning();
+
+    const recipe = await recipeService.getById(inserted.id);
+    expect(recipe!.steps).toEqual([
+      { stepOrder: 1, instruction: 'Bloom with 50g water', waterAtStep: 50 },
+      { stepOrder: 2, instruction: 'Pour to 250g', waterAtStep: 250 },
+    ]);
+  });
+
+  it('returns empty array for steps field with empty JSON array', async () => {
+    const { recipeService } = await import('../services/recipe-service');
+
+    const [inserted] = await testDb.insert(schema.recipes).values(sampleRecipe2).returning();
+
+    const recipe = await recipeService.getById(inserted.id);
+    expect(recipe!.steps).toEqual([]);
   });
 });

@@ -20,7 +20,7 @@ export async function seedRecipes(): Promise<number> {
   let total = 0;
 
   // Truncate existing recipes
-  db.delete(recipes).run();
+  await db.delete(recipes);
 
   for (const file of files) {
     const content = readFileSync(resolve(FILTER_COFFEE_DIR, file), 'utf-8');
@@ -30,7 +30,7 @@ export async function seedRecipes(): Promise<number> {
     const parsed = parseRecipesFromMarkdown(content, method);
 
     for (const recipe of parsed) {
-      db.insert(recipes).values({
+      await db.insert(recipes).values({
         method,
         name: recipe.name,
         objective: recipe.objective || null,
@@ -49,7 +49,7 @@ export async function seedRecipes(): Promise<number> {
             ...(s.waterAtStep ? { waterAtStep: s.waterAtStep } : {}),
           })),
         ),
-      }).run();
+      });
       total++;
     }
   }
@@ -63,23 +63,23 @@ async function seed() {
   console.log('🌱 Seeding database…');
 
   // Create or get default user (idempotent)
-  const defaultUser = db
+  const [defaultUser] = await db
     .select()
     .from(users)
     .where(eq(users.email, 'dev@bitacora.dev'))
-    .get();
+    .limit(1);
 
   if (!defaultUser) {
-    db.insert(users).values({ email: 'dev@bitacora.dev' }).run();
+    await db.insert(users).values({ email: 'dev@bitacora.dev' });
     console.log('   - 1 user created (dev@bitacora.dev)');
   } else {
     console.log('   - 1 user already exists (dev@bitacora.dev)');
   }
 
   // Clean slate: remove all user-facing data, keep only recipes
-  db.delete(tastingNotes).run();
-  db.delete(brewSessions).run();
-  db.delete(coffeeBeans).run();
+  await db.delete(tastingNotes);
+  await db.delete(brewSessions);
+  await db.delete(coffeeBeans);
 
   // Seed recipes from markdown files
   const recipeCount = await seedRecipes();

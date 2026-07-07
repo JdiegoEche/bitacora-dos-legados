@@ -59,13 +59,15 @@ export const beanService = {
     const bean = await this.getById(id, userId);
     if (!bean) return null;
 
-    // Aggregate stats from brew_sessions (scoped to user)
+    // Aggregate stats — avgRating from tastingNotes.rating (numeric INT),
+    // NOT brewSessions.rating (TEXT ratio like "1:15")
     const [aggregate] = await db
       .select({
-        avgRating: sql<number | null>`CAST(AVG(${brewSessions.rating}) AS REAL)`,
-        brewCount: sql<number>`COUNT(*)`,
+        avgRating: sql<number | null>`CAST(AVG(${tastingNotes.rating}) AS REAL)`,
+        brewCount: sql<number>`COUNT(DISTINCT ${brewSessions.id})`,
       })
       .from(brewSessions)
+      .leftJoin(tastingNotes, eq(tastingNotes.brewSessionId, brewSessions.id))
       .where(
         and(eq(brewSessions.coffeeBeanId, id), eq(brewSessions.userId, userId)),
       );

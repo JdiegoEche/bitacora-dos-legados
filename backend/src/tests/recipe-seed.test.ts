@@ -1,67 +1,24 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import Database from 'better-sqlite3';
+import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
+import { createTestDb, destroyTestDb } from '../db/test-helper';
+import type { TestDb } from '../db/test-helper';
+import * as schema from '../db/schema';
+
+// ─── Mock DB connection ──────────────────────────────────────────────────────
+
+let testDb: TestDb;
+
+vi.mock('../db/connection', () => ({
+  get db() { return testDb; },
+}));
 
 // ─── Setup ──────────────────────────────────────────────────────────────────
 
-let testDir: string;
-
 beforeAll(async () => {
-  testDir = mkdtempSync(join(tmpdir(), 'bitacora-seed-'));
-  const dbPath = join(testDir, 'test.db');
-
-  // Create database with recipes table
-  const sqlite = new Database(dbPath);
-  sqlite.pragma('journal_mode = WAL');
-  sqlite.pragma('foreign_keys = ON');
-
-  sqlite.exec(`
-    CREATE TABLE recipes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      method TEXT NOT NULL,
-      name TEXT NOT NULL,
-      objective TEXT,
-      preparation TEXT NOT NULL DEFAULT '',
-      coffee_dose REAL NOT NULL,
-      water_dose REAL NOT NULL,
-      ratio TEXT NOT NULL,
-      temperature TEXT NOT NULL,
-      grind_size TEXT NOT NULL,
-      total_time TEXT NOT NULL,
-      profile TEXT NOT NULL,
-      steps TEXT NOT NULL DEFAULT '[]',
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  sqlite.close();
-
-  // Set env BEFORE importing modules
-  process.env.DATABASE_URL = dbPath;
+  testDb = await createTestDb();
 });
 
-afterAll(async () => {
-  try {
-    const { db } = await import('../db/connection');
-    if ('session' in db && typeof (db as any).session?.close === 'function') {
-      (db as any).session.close();
-    }
-  } catch {
-    // Best effort
-  }
-
-  await new Promise((r) => setTimeout(r, 100));
-
-  if (existsSync(testDir)) {
-    try {
-      rmSync(testDir, { recursive: true, force: true });
-    } catch {
-      // Windows EBUSY
-    }
-  }
-  delete process.env.DATABASE_URL;
+afterAll(() => {
+  destroyTestDb();
 });
 
 // ─── Seed Tests ─────────────────────────────────────────────────────────────
@@ -75,78 +32,79 @@ const EXPECTED_COUNTS: Record<string, number> = {
   aeropress: 3,
 };
 
-const TOTAL_RECIPES = Object.values(EXPECTED_COUNTS).reduce((a, b) => a + b, 0);
-
-describe('recipe seed', () => {
-  it('runs without error and inserts all recipes', async () => {
+describe('seedRecipes()', () => {
+  it('seeds recipes from filter-coffeMD markdown files', async () => {
     const { seedRecipes } = await import('../db/seed');
-
-    // Run the seed function
-    await seedRecipes();
-
-    // Verify all recipes were inserted
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
-    const { count } = await import('drizzle-orm');
-
-    // Count total
-    const [totalResult] = await db
-      .select({ total: count() })
-      .from(recipes);
-    expect(totalResult.total).toBe(TOTAL_RECIPES);
+    const count = await seedRecipes();
+    expect(count).toBeGreaterThan(0);
   });
-});
 
-describe('recipe seed — counts per method', () => {
-  it('inserts correct number of recipes per method', async () => {
+  it('inserts recipes grouped by method', async () => {
     const { seedRecipes } = await import('../db/seed');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
-    const { eq, count } = await import('drizzle-orm');
-
-    // Seed again (idempotent run)
     await seedRecipes();
 
-    // Check counts per method
     for (const [method, expected] of Object.entries(EXPECTED_COUNTS)) {
-      const [result] = await db
-        .select({ total: count() })
-        .from(recipes)
-        .where(eq(recipes.method, method));
-      expect(result.total).toBe(expected);
+      const result = await testDb
+        .select()
+        .from(schema.recipes)
+        .where(
+          (await import('drizzle-orm')).eq(schema.recipes.method, method),
+        );
+      expect(result).toHaveLength(expected);
     }
   });
-});
 
-describe('seed idempotency', () => {
-  it('produces same recipe count after running twice', async () => {
+  it('is idempotent — calling seedRecipes twice produces the same count', async () => {
     const { seedRecipes } = await import('../db/seed');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
-    const { count } = await import('drizzle-orm');
 
-    // Run seed a third time
     await seedRecipes();
+    const count1 = await seedRecipes();
 
-    const [result] = await db
-      .select({ total: count() })
-      .from(recipes);
-    expect(result.total).toBe(TOTAL_RECIPES);
+    // After second seed, total should be same as first (recipes were truncated)
+    const total = await testDb
+      .select({ count: (await import('drizzle-orm')).count() })
+      .from(schema.recipes);
+    expect(Number(total[0].count)).toBe(count1);
   });
 
-  it('does not create duplicate recipes after multiple runs', async () => {
+  it('each seeded recipe has all required fields', async () => {
     const { seedRecipes } = await import('../db/seed');
-    const { db } = await import('../db/connection');
-    const { recipes } = await import('../db/schema');
-    const { eq, count } = await import('drizzle-orm');
+    await seedRecipes();
 
-    // Verify each method has the exact same count after multiple runs
-    for (const [method, expected] of Object.entries(EXPECTED_COUNTS)) {
-      const [result] = await db
-        .select({ total: count() })
-        .from(recipes)
-        .where(eq(recipes.method, method));
-      expect(result.total).toBe(expected);
+    const recipes = await testDb.select().from(schema.recipes).limit(5);
+    for (const recipe of recipes) {
+      expect(recipe.name).toBeTruthy();
+      expect(recipe.method).toBeTruthy();
+      expect(recipe.coffeeDose).toBeGreaterThan(0);
+      expect(recipe.waterDose).toBeGreaterThan(0);
+      expect(recipe.ratio).toBeTruthy();
+      expect(recipe.temperature).toBeTruthy();
+      expect(recipe.grindSize).toBeTruthy();
+      expect(recipe.totalTime).toBeTruthy();
+      expect(recipe.profile).toBeTruthy();
     }
+  });
+
+  it('each seeded recipe has valid JSON steps', async () => {
+    const { seedRecipes } = await import('../db/seed');
+    await seedRecipes();
+
+    const recipes = await testDb.select().from(schema.recipes);
+    for (const recipe of recipes) {
+      expect(() => JSON.parse(recipe.steps)).not.toThrow();
+      const steps = JSON.parse(recipe.steps);
+      expect(Array.isArray(steps)).toBe(true);
+      for (const step of steps) {
+        expect(step).toHaveProperty('stepOrder');
+        expect(step).toHaveProperty('instruction');
+      }
+    }
+  });
+
+  // Skipped: seedRecipes resolves its path via __dirname at module load,
+  //   so mocking process.cwd or monkey-patching fs doesn't affect it.
+  //   Proper vi.mock('node:fs') would break other tests in this file.
+  it.skip('returns 0 when no markdown files are found (wrong cwd)', async () => {
+    // Needs vi.mock('node:fs', ...) setup at file level
   });
 });

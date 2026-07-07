@@ -29,10 +29,7 @@ brewRouter.get('/:id', zValidator('param', idParamSchema), async (c) => {
 brewRouter.post('/', zValidator('json', createBrewSchema), async (c) => {
   const userId = c.get('userId');
   const data = c.req.valid('json');
-  const brew = await brewService.create(
-    { ...data, brewTime: Number(data.brewTime) },
-    userId,
-  );
+  const brew = await brewService.create(data, userId);
   return c.json(brew, 201);
 });
 
@@ -45,14 +42,7 @@ brewRouter.put(
     const userId = c.get('userId');
     const { id } = c.req.valid('param');
     const data = c.req.valid('json');
-    const brew = await brewService.update(
-      id,
-      {
-        ...data,
-        brewTime: data.brewTime ? Number(data.brewTime) : undefined,
-      },
-      userId,
-    );
+    const brew = await brewService.update(id, data, userId);
     if (!brew) return c.json({ error: 'Brew session not found' }, 404);
     return c.json(brew);
   },

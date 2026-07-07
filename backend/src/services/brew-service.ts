@@ -38,7 +38,7 @@ export const brewService = {
     const [updated] = await db
       .update(brewSessions)
       .set({
-        isPublic: isPublic ? 1 : 0,
+        isPublic,
         shareToken,
         updatedAt: new Date().toISOString(),
       })
@@ -48,7 +48,7 @@ export const brewService = {
     if (!updated) return null;
 
     return {
-      isPublic: updated.isPublic === 1,
+      isPublic: updated.isPublic,
       shareToken: updated.shareToken ?? null,
     };
   },
@@ -59,7 +59,7 @@ export const brewService = {
     const result = await db.query.brewSessions.findFirst({
       where: and(
         eq(brewSessions.shareToken, shareToken),
-        eq(brewSessions.isPublic, 1),
+        eq(brewSessions.isPublic, true),
       ),
       with: {
         coffeeBean: true,

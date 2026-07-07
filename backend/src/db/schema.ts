@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, integer, real, boolean, serial, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ─── Users ──────────────────────────────────────────────────────────────────
 
-export const users = sqliteTable('users', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   createdAt: text('created_at')
     .notNull()
@@ -13,12 +13,12 @@ export const users = sqliteTable('users', {
 
 // ─── Coffee Beans ───────────────────────────────────────────────────────────
 
-export const coffeeBeans = sqliteTable('coffee_beans', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const coffeeBeans = pgTable('coffee_beans', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   roaster: text('roaster').notNull(),
   origin: text('origin'),
-  roastLevel: text('roast_level'), // "light" | "medium" | "dark" | etc.
+  roastLevel: text('roast_level'),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: text('created_at')
     .notNull()
@@ -27,28 +27,30 @@ export const coffeeBeans = sqliteTable('coffee_beans', {
     .notNull()
     .$defaultFn(() => new Date().toISOString())
     .$onUpdateFn(() => new Date().toISOString()),
-});
+}, (table) => [
+  index('coffee_beans_user_idx').on(table.userId),
+]);
 
 // ─── Brew Sessions ──────────────────────────────────────────────────────────
 
-export const brewSessions = sqliteTable('brew_sessions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const brewSessions = pgTable('brew_sessions', {
+  id: serial('id').primaryKey(),
   coffeeBeanId: integer('coffee_bean_id').references(() => coffeeBeans.id, {
     onDelete: 'set null',
   }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   shareToken: text('share_token').unique(),
-  isPublic: integer('is_public').notNull().default(0),
-  grindSize: text('grind_size'), // e.g. "medium", "fine", "coarse"
-  waterTemp: integer('water_temp'), // Celsius
-  brewTime: integer('brew_time'), // seconds
-  method: text('method').notNull(), // e.g. "V60", "Aeropress"
-  grinder: text('grinder'), // grinder model/type
-  clicks: text('clicks'), // grinder setting in clicks
-  coffeeDose: real('coffee_dose'), // grams
-  waterDose: real('water_dose'), // grams
+  isPublic: boolean('is_public').notNull().default(false),
+  grindSize: text('grind_size'),
+  waterTemp: integer('water_temp'),
+  brewTime: text('brew_time'),
+  method: text('method').notNull(),
+  grinder: text('grinder'),
+  clicks: text('clicks'),
+  coffeeDose: real('coffee_dose'),
+  waterDose: real('water_dose'),
   notes: text('notes'),
-  rating: text('rating'), // free text
+  rating: text('rating'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -56,12 +58,15 @@ export const brewSessions = sqliteTable('brew_sessions', {
     .notNull()
     .$defaultFn(() => new Date().toISOString())
     .$onUpdateFn(() => new Date().toISOString()),
-});
+}, (table) => [
+  index('brew_sessions_user_method_idx').on(table.userId, table.method),
+  index('brew_sessions_coffee_bean_idx').on(table.coffeeBeanId),
+]);
 
 // ─── Tasting Notes ──────────────────────────────────────────────────────────
 
-export const tastingNotes = sqliteTable('tasting_notes', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const tastingNotes = pgTable('tasting_notes', {
+  id: serial('id').primaryKey(),
   brewSessionId: integer('brew_session_id')
     .notNull()
     .references(() => brewSessions.id, { onDelete: 'cascade' }),
@@ -70,17 +75,19 @@ export const tastingNotes = sqliteTable('tasting_notes', {
   flavor: text('flavor'),
   body: text('body'),
   acidity: text('acidity'),
-  rating: integer('rating'), // 1–5
+  rating: integer('rating'),
   freeText: text('free_text'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
-});
+}, (table) => [
+  index('tasting_notes_brew_session_idx').on(table.brewSessionId),
+]);
 
 // ─── Recipe Catalog ──────────────────────────────────────────────────────────
 
-export const recipes = sqliteTable('recipes', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const recipes = pgTable('recipes', {
+  id: serial('id').primaryKey(),
   method: text('method').notNull(),
   name: text('name').notNull(),
   objective: text('objective'),
@@ -138,17 +145,3 @@ export const usersRelations = relations(users, ({ many }) => ({
   brewSessions: many(brewSessions),
   tastingNotes: many(tastingNotes),
 }));
-
-// ─── Indexes ────────────────────────────────────────────────────────────────
-
-export const brewSessionsUserMethodIdx = index('brew_sessions_user_method_idx')
-  .on(brewSessions.userId, brewSessions.method);
-
-export const brewSessionsCoffeeBeanIdx = index('brew_sessions_coffee_bean_idx')
-  .on(brewSessions.coffeeBeanId);
-
-export const tastingNotesBrewSessionIdx = index('tasting_notes_brew_session_idx')
-  .on(tastingNotes.brewSessionId);
-
-export const coffeeBeansUserIdx = index('coffee_beans_user_idx')
-  .on(coffeeBeans.userId);
