@@ -36,9 +36,20 @@ app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
 // ─── Debug: direct POST on app ──────────────────────────────────────────────
 
-app.post('/api/echo', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  return c.json({ echo: true, body, method: c.req.method, path: c.req.path });
+app.all('/api/echo', async (c) => {
+  const raw = await c.req.text().catch(() => '<parse-error>');
+  const contentType = c.req.header('content-type');
+  return c.json({
+    echo: true,
+    method: c.req.method,
+    path: c.req.path,
+    url: c.req.url,
+    contentType,
+    rawBody: raw,
+    headers: Object.fromEntries(
+      Object.entries(c.req.header()).map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : String(v)]),
+    ),
+  });
 });
 
 export default app;
