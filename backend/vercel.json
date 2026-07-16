@@ -7,9 +7,5 @@
     "api/[[...path]].ts": {
       "includeFiles": "frontend-dist/**"
     }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/api/$1" }
-  ]
+  }
 }
