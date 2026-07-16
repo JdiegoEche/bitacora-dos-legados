@@ -23,18 +23,9 @@ export default async function handler(_req: any, res: any) {
     const url = new URL(_req.url ?? '/', `https://${_req.headers.host ?? 'localhost'}`);
     const headers = toHeaders(_req.headers);
 
-    // Vercel Node.js runtime auto-parses JSON/urlencoded body into _req.body
-    let body: string | undefined;
-    if (_req.method && !['GET', 'HEAD'].includes(_req.method)) {
-      if (_req.body !== undefined) {
-        body = typeof _req.body === 'object' ? JSON.stringify(_req.body) : String(_req.body);
-      }
-    }
-
     const request = new Request(url.toString(), {
       method: _req.method ?? 'GET',
       headers,
-      body: body?.length ? body : undefined,
     });
 
     const response = await app.fetch(request);
