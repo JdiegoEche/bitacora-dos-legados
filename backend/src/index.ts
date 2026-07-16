@@ -1,14 +1,19 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
-import app from './app.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import app from './app';
 
 // ─── Static frontend (production only) ──────────────────────────────────────
 
 if (process.env.NODE_ENV === 'production') {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
   app.use(
     '/*',
     serveStatic({
-      root: './frontend-dist',
+      root: join(__dirname, '../frontend-dist'),
     })
   );
 }
