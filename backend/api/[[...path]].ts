@@ -2,9 +2,6 @@ import app from '../src/app.js';
 
 export const config = { runtime: 'nodejs' };
 
-/**
- * Convierte headers de Node.js IncomingMessage a Headers estándar.
- */
 function toHeaders(src: Record<string, string | string[] | undefined>): Headers {
   const dst = new Headers();
   for (const [key, value] of Object.entries(src)) {
@@ -15,19 +12,23 @@ function toHeaders(src: Record<string, string | string[] | undefined>): Headers 
   return dst;
 }
 
-/**
- * Lee el body completo de un IncomingMessage.
- */
-function readBody(req: import('http').IncomingMessage): Promise<string> {
-  return new Promise((resolve) => {
-    if ((req as any).body) {
-      resolve(typeof (req as any).body === 'string' ? (req as any).body : JSON.stringify((req as any).body));
-      return;
-    }
-    const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString()));
-  });
+/** Try multiple strategies to get the request body. */
+async function getBody(req: any): Promise<string | undefined> {
+  // Strategy 1: Vercel's body parser already ran
+  if (req.body !== undefined) {
+    if (typeof req.body === 'string') return req.body;
+    if (Buffer.isBuffer(req.body)) return req.body.toString();
+    return JSON.stringify(req.body);
+  }
+  // Strategy 2: Read raw from stream
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  if (chunks.length) return Buffer.concat(chunks).toString();
+  // Strategy 3: Readable already consumed — check rawBody
+  if (req.rawBody) return req.rawBody.toString();
+  return undefined;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,8 +44,11 @@ export default async function handler(_req: any, res: any) {
 
     let body: string | undefined;
     if (_req.method && !['GET', 'HEAD'].includes(_req.method)) {
-      body = await readBody(_req);
+      body = await getBody(_req);
     }
+
+    // Debug: log body info
+    console.log('[handler] body length:', body?.length ?? 0, 'body exists:', !!body);
 
     const request = new Request(url.toString(), {
       method: _req.method ?? 'GET',
