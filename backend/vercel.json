@@ -3,10 +3,7 @@
   "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p frontend-dist && cp -r ../frontend/dist/* frontend-dist/",
   "outputDirectory": "frontend-dist",
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "not": [{ "source": "/api(.*)" }],
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
