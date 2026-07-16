@@ -20,7 +20,7 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
   const queryClient = useQueryClient();
 
   const [name, setName] = useState(bean?.name ?? '');
-  const [variety, setVariety] = useState(bean?.variety ?? '');
+  const [roaster, setRoaster] = useState(bean?.roaster ?? '');
   const [origin, setOrigin] = useState(bean?.origin ?? '');
   const [roastLevel, setRoastLevel] = useState(bean?.roastLevel ?? '');
 
@@ -39,7 +39,7 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
 
     mutation.mutate({
       name: name.trim(),
-      variety: variety.trim(),
+      roaster: roaster.trim(),
       origin: origin.trim() || null,
       roastLevel: roastLevel.trim() || null,
     });
@@ -66,11 +66,12 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
         </label>
 
         <label className="field">
-          Variedad
+          Tostador *
           <input
-            value={variety}
-            onChange={(e) => setVariety(e.target.value)}
-            placeholder="Caturro, bourbon, etc."
+            required
+            value={roaster}
+            onChange={(e) => setRoaster(e.target.value)}
+            placeholder="Dos legados"
             className="input"
           />
         </label>
