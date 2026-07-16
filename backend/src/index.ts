@@ -8,7 +8,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(
     '/*',
     serveStatic({
-      root: '../frontend/dist',
+      root: './frontend-dist',
     })
   );
 }
