@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "installCommand": "npm install",
   "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p frontend-dist && cp -r ../frontend/dist/* frontend-dist/",
   "outputDirectory": "frontend-dist",
