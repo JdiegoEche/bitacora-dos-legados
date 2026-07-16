@@ -34,17 +34,6 @@ app.onError((err, c) => {
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
-// ─── Debug: echo without reading body ───────────────────────────────────────
 
-app.all('/api/echo', (c) => {
-  return c.json({
-    echo: true,
-    method: c.req.method,
-    path: c.req.path,
-    url: c.req.url,
-    contentType: c.req.header('content-type'),
-    hasBody: !!c.req.header('content-length'),
-  });
-});
 
 export default app;
