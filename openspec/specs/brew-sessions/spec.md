@@ -12,7 +12,7 @@ The system MUST accept a new brew session with recipe fields, associate it with 
 
 **Data Model**: `brew_sessions` table:
 | Field | Type | Notes |
-|-------|------|-------|
+| --- | --- | --- |
 | `id` | INTEGER (PK) | Auto-increment |
 | `user_id` | INTEGER (FK) | References `users.id`, NOT NULL |
 | `coffee_bean_id` | INTEGER (FK) | References `coffee_beans.id`, nullable |

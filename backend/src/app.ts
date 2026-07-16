@@ -34,4 +34,11 @@ app.onError((err, c) => {
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
+// ─── Debug: direct POST on app ──────────────────────────────────────────────
+
+app.post('/api/echo', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  return c.json({ echo: true, body, method: c.req.method, path: c.req.path });
+});
+
 export default app;

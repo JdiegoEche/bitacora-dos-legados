@@ -4,13 +4,15 @@ export const config = { runtime: 'nodejs' };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(_req: any, res: any) {
-  // Timeout so the function never hangs indefinitely
   const timeout = setTimeout(() => {
     res.writeHead(504, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Function timed out' }));
   }, 10_000);
 
   try {
+    // Debug: log the incoming URL and method
+    console.log('[handler] method:', _req.method, 'url:', _req.url, 'host:', _req.headers.host);
+
     const url = new URL(_req.url ?? '/', `https://${_req.headers.host ?? 'localhost'}`);
 
     const headers = new Headers();
@@ -30,8 +32,15 @@ export default async function handler(_req: any, res: any) {
         : undefined,
     });
 
+    // Debug: also show what URL the Request has
+    console.log('[handler] request URL:', request.url);
+
     const response = await app.fetch(request);
     const body = await response.text();
+
+    // Also try a direct health check
+    console.log('[handler] response status:', response.status, 'body:', body.substring(0, 200));
+
     res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
     res.end(body);
   } catch (err) {
