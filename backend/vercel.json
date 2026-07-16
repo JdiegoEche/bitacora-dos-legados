@@ -1,4 +1,4 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && mkdir -p frontend-dist && cp -r ../frontend/dist/* frontend-dist/"
+  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p frontend-dist && cp -r ../frontend/dist/* frontend-dist/"
 }
