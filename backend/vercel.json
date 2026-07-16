@@ -1,10 +1,4 @@
 {
   "framework": null,
-  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p public && cp -r ../frontend/dist/* public/",
-  "functions": {
-    "api/index.ts": { "runtime": "nodejs" }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" }
-  ]
+  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p public && cp -r ../frontend/dist/* public/"
 }
