@@ -1,10 +1,6 @@
-export const config = {
-  runtime: 'nodejs',
-};
+import { handle } from 'hono/vercel';
+import app from '../src/app.js';
 
-export default function handler(
-  _req: unknown,
-  res: { status: (code: number) => { json: (data: Record<string, unknown>) => void } },
-) {
-  res.status(200).json({ status: 'ok' });
-}
+export const config = { runtime: 'nodejs' };
+
+export default handle(app);
