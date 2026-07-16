@@ -20,15 +20,21 @@ export default async function handler(_req: any, res: any) {
   }, 12_000);
 
   try {
-    // Use x-forwarded-host first (Vercel sets this), fall back to Host header
     const host = _req.headers['x-forwarded-host'] ?? _req.headers['host'] ?? 'bitacora-dos-legados-7m9r.vercel.app';
     const url = new URL(_req.url ?? '/', `https://${host}`);
-
     const headers = toHeaders(_req.headers);
+
+    let body: string | undefined;
+    if (_req.method && !['GET', 'HEAD'].includes(_req.method)) {
+      if (_req.body !== undefined) {
+        body = typeof _req.body === 'object' ? JSON.stringify(_req.body) : String(_req.body);
+      }
+    }
 
     const request = new Request(url.toString(), {
       method: _req.method ?? 'GET',
       headers,
+      body: body?.length ? body : undefined,
     });
 
     const response = await app.fetch(request);
