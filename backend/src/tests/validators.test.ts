@@ -7,7 +7,7 @@ import {
   createNoteSchema,
   idParamSchema,
   brewIdParamSchema,
-} from '../lib/validators';
+} from '../lib/validators.js';
 
 // ─── Coffee Bean Validators ─────────────────────────────────────────────────
 

@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { authService } from '../services/auth-service';
-import { signJWT } from '../lib/auth';
-import { authMiddleware } from '../middleware/auth';
+import { authService } from '../services/auth-service.js';
+import { signJWT } from '../lib/auth.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const authRouter = new Hono();
 

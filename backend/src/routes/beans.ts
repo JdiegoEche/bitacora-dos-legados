@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { authMiddleware } from '../middleware/auth';
-import { beanService } from '../services/bean-service';
-import { createBeanSchema, updateBeanSchema, idParamSchema } from '../lib/validators';
+import { authMiddleware } from '../middleware/auth.js';
+import { beanService } from '../services/bean-service.js';
+import { createBeanSchema, updateBeanSchema, idParamSchema } from '../lib/validators.js';
 
 const beanRouter = new Hono();
 

@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { authMiddleware } from '../middleware/auth';
-import { brewService } from '../services/brew-service';
-import { createBrewSchema, updateBrewSchema, idParamSchema, shareSchema } from '../lib/validators';
+import { authMiddleware } from '../middleware/auth.js';
+import { brewService } from '../services/brew-service.js';
+import { createBrewSchema, updateBrewSchema, idParamSchema, shareSchema } from '../lib/validators.js';
 
 const brewRouter = new Hono();
 

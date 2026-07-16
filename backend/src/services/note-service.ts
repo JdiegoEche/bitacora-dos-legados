@@ -1,7 +1,7 @@
 import { eq, and, asc } from 'drizzle-orm';
-import { db } from '../db/connection';
-import { brewSessions, tastingNotes } from '../db/schema';
-import type { TastingNote } from '../types';
+import { db } from '../db/connection.js';
+import { brewSessions, tastingNotes } from '../db/schema.js';
+import type { TastingNote } from '../types/index.js';
 
 type CreateNoteInput = Omit<typeof tastingNotes.$inferInsert, 'brewSessionId' | 'userId'>;
 

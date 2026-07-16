@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMethodSlug, parseRecipesFromMarkdown } from '../lib/recipe-parser';
+import { parseMethodSlug, parseRecipesFromMarkdown } from '../lib/recipe-parser.js';
 
 // ─── Method Slug Extraction ─────────────────────────────────────────────────
 

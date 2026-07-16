@@ -1,12 +1,12 @@
 import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
-import authRouter from './routes/auth';
-import brewRouter from './routes/brews';
-import beanRouter from './routes/beans';
-import noteRouter from './routes/notes';
-import recipeRouter from './routes/recipes';
-import publicBrewRouter from './routes/public';
+import authRouter from './routes/auth.js';
+import brewRouter from './routes/brews.js';
+import beanRouter from './routes/beans.js';
+import noteRouter from './routes/notes.js';
+import recipeRouter from './routes/recipes.js';
+import publicBrewRouter from './routes/public.js';
 
 const app = new Hono();
 

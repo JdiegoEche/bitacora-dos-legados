@@ -1,5 +1,5 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from '../db/schema';
+import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from '../db/schema.js';
 
 // ─── Hono Context Extension ─────────────────────────────────────────────────
 

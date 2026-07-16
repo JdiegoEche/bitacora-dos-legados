@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { createTestDb, destroyTestDb } from '../db/test-helper';
-import type { TestDb } from '../db/test-helper';
+import { createTestDb, destroyTestDb } from '../db/test-helper.js';
+import type { TestDb } from '../db/test-helper.js';
 import { Hono } from 'hono';
 
 // ─── Mock DB connection ──────────────────────────────────────────────────────

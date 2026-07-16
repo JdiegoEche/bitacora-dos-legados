@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { brewService } from '../services/brew-service';
-import { shareTokenParamSchema } from '../lib/validators';
+import { brewService } from '../services/brew-service.js';
+import { shareTokenParamSchema } from '../lib/validators.js';
 
 const publicBrewRouter = new Hono();
 

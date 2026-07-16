@@ -1,5 +1,5 @@
 import type { Context, Next } from 'hono';
-import { verifyJWT } from '../lib/auth';
+import { verifyJWT } from '../lib/auth.js';
 
 /**
  * Auth middleware for Hono.

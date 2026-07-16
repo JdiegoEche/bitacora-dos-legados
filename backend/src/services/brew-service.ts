@@ -1,7 +1,7 @@
 import { eq, and, desc } from 'drizzle-orm';
-import { db } from '../db/connection';
-import { brewSessions } from '../db/schema';
-import type { BrewSession, BrewSessionDetail } from '../types';
+import { db } from '../db/connection.js';
+import { brewSessions } from '../db/schema.js';
+import type { BrewSession, BrewSessionDetail } from '../types/index.js';
 
 export const brewService = {
   async list(userId: number): Promise<BrewSession[]> {

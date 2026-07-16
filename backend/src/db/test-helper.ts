@@ -1,7 +1,7 @@
 import { newDb, type IMemoryDb } from 'pg-mem';
 import { drizzle, type PgRemoteDatabase } from 'drizzle-orm/pg-proxy';
 import { sql } from 'drizzle-orm';
-import * as schema from './schema';
+import * as schema from './schema.js';
 
 export type TestDb = PgRemoteDatabase<typeof schema> & {
   // Extend with a raw query helper for convenience

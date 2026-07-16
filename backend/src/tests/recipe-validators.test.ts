@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   recipeQuerySchema,
   recipeIdParamSchema,
-} from '../lib/validators';
+} from '../lib/validators.js';
 
 // ─── Recipe Query Validators ─────────────────────────────────────────────────
 

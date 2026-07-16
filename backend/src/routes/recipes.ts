@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { recipeService } from '../services/recipe-service';
-import { recipeQuerySchema, recipeIdParamSchema } from '../lib/validators';
+import { recipeService } from '../services/recipe-service.js';
+import { recipeQuerySchema, recipeIdParamSchema } from '../lib/validators.js';
 
 const recipeRouter = new Hono();
 

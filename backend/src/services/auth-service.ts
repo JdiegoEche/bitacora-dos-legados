@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db/connection';
-import { users } from '../db/schema';
-import type { User } from '../types';
+import { db } from '../db/connection.js';
+import { users } from '../db/schema.js';
+import type { User } from '../types/index.js';
 
 export const authService = {
   /**

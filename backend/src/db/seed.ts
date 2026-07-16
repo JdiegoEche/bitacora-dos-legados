@@ -2,9 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { eq } from 'drizzle-orm';
-import { db } from './connection';
-import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from './schema';
-import { parseMethodSlug, parseRecipesFromMarkdown } from '../lib/recipe-parser';
+import { db } from './connection.js';
+import { users, coffeeBeans, brewSessions, tastingNotes, recipes } from './schema.js';
+import { parseMethodSlug, parseRecipesFromMarkdown } from '../lib/recipe-parser.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FILTER_COFFEE_DIR = resolve(__dirname, '../../../filter-coffeMD');

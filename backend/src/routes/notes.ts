@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { authMiddleware } from '../middleware/auth';
-import { noteService } from '../services/note-service';
+import { authMiddleware } from '../middleware/auth.js';
+import { noteService } from '../services/note-service.js';
 import {
   createNoteSchema,
   idParamSchema,
   brewIdParamSchema,
-} from '../lib/validators';
+} from '../lib/validators.js';
 
 const noteRouter = new Hono();
 
