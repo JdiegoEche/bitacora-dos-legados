@@ -2,6 +2,34 @@ import app from '../src/app.js';
 
 export const config = { runtime: 'nodejs' };
 
+/**
+ * Convierte headers de Node.js IncomingMessage a Headers estándar.
+ */
+function toHeaders(src: Record<string, string | string[] | undefined>): Headers {
+  const dst = new Headers();
+  for (const [key, value] of Object.entries(src)) {
+    if (!value) continue;
+    if (Array.isArray(value)) value.forEach((v) => dst.append(key, v));
+    else dst.set(key, value);
+  }
+  return dst;
+}
+
+/**
+ * Lee el body completo de un IncomingMessage.
+ */
+function readBody(req: import('http').IncomingMessage): Promise<string> {
+  return new Promise((resolve) => {
+    if ((req as any).body) {
+      resolve(typeof (req as any).body === 'string' ? (req as any).body : JSON.stringify((req as any).body));
+      return;
+    }
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(_req: any, res: any) {
   const timeout = setTimeout(() => {
@@ -10,39 +38,24 @@ export default async function handler(_req: any, res: any) {
   }, 10_000);
 
   try {
-    // Debug: log the incoming URL and method
-    console.log('[handler] method:', _req.method, 'url:', _req.url, 'host:', _req.headers.host);
-
     const url = new URL(_req.url ?? '/', `https://${_req.headers.host ?? 'localhost'}`);
+    const headers = toHeaders(_req.headers);
 
-    const headers = new Headers();
-    for (const [key, value] of Object.entries(_req.headers)) {
-      if (!value) continue;
-      if (Array.isArray(value)) value.forEach((v) => headers.set(key, v as string));
-      else headers.set(key, value as string);
+    let body: string | undefined;
+    if (_req.method && !['GET', 'HEAD'].includes(_req.method)) {
+      body = await readBody(_req);
     }
 
     const request = new Request(url.toString(), {
       method: _req.method ?? 'GET',
       headers,
-      body: _req.method && !['GET', 'HEAD'].includes(_req.method)
-        ? (_req.body
-            ? (typeof _req.body === 'string' ? _req.body : JSON.stringify(_req.body))
-            : undefined)
-        : undefined,
+      body: body?.length ? body : undefined,
     });
 
-    // Debug: also show what URL the Request has
-    console.log('[handler] request URL:', request.url);
-
     const response = await app.fetch(request);
-    const body = await response.text();
-
-    // Also try a direct health check
-    console.log('[handler] response status:', response.status, 'body:', body.substring(0, 200));
-
+    const responseBody = await response.text();
     res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
-    res.end(body);
+    res.end(responseBody);
   } catch (err) {
     console.error('[handler] error:', err);
     res.writeHead(500, { 'Content-Type': 'application/json' });
