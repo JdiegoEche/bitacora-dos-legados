@@ -56,7 +56,7 @@ export class ApiError extends Error {
 
 // ─── Generic helpers ────────────────────────────────────────────────────────
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta as any).env.VITE_API_URL || '';
 
 async function request<T>(
   path: string,
