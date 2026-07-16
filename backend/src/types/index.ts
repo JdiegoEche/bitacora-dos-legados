@@ -59,6 +59,6 @@ export interface RecipeStep {
   waterAtStep?: number;
 }
 
-export interface RecipeDetail extends Recipe {
+export interface RecipeDetail extends Omit<Recipe, 'steps'> {
   steps: RecipeStep[];
 }

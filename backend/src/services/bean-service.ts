@@ -23,7 +23,7 @@ export const beanService = {
   },
 
   async create(
-    data: typeof coffeeBeans.$inferInsert,
+    data: Omit<typeof coffeeBeans.$inferInsert, 'userId'>,
     userId: number,
   ): Promise<CoffeeBean> {
     const [bean] = await db

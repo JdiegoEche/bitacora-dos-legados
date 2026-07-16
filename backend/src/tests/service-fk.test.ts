@@ -50,7 +50,7 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
       method: 'V60',
       grindSize: 'medium',
       waterTemp: 93,
-      brewTime: 150,
+      brewTime: '150',
       coffeeDose: 15,
       waterDose: 250,
     });
@@ -62,7 +62,7 @@ describe('Bean delete — SET NULL on brew_sessions', () => {
       method: 'Aeropress',
       grindSize: 'fine',
       waterTemp: 88,
-      brewTime: 120,
+      brewTime: '120',
       coffeeDose: 14,
       waterDose: 200,
     });

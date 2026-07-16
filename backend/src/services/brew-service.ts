@@ -73,7 +73,7 @@ export const brewService = {
   },
 
   async create(
-    data: typeof brewSessions.$inferInsert,
+    data: Omit<typeof brewSessions.$inferInsert, 'userId'>,
     userId: number,
   ): Promise<BrewSession> {
     const [brew] = await db
