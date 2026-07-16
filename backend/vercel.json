@@ -1,4 +1,7 @@
 {
   "framework": null,
-  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p public && cp -r ../frontend/dist/* public/"
+  "buildCommand": "npx tsc && cd ../frontend && npm install && npm run build && cd ../backend && mkdir -p public && cp -r ../frontend/dist/* public/",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" }
+  ]
 }
