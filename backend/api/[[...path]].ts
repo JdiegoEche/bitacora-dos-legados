@@ -20,7 +20,10 @@ export default async function handler(_req: any, res: any) {
   }, 12_000);
 
   try {
-    const url = new URL(_req.url ?? '/', `https://${_req.headers.host ?? 'localhost'}`);
+    // Use x-forwarded-host first (Vercel sets this), fall back to Host header
+    const host = _req.headers['x-forwarded-host'] ?? _req.headers['host'] ?? 'bitacora-dos-legados-7m9r.vercel.app';
+    const url = new URL(_req.url ?? '/', `https://${host}`);
+
     const headers = toHeaders(_req.headers);
 
     const request = new Request(url.toString(), {

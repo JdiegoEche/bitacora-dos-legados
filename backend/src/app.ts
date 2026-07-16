@@ -36,4 +36,11 @@ app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
 
 
+// ─── Debug: catch-all to log unmatched paths ────────────────────────────────
+
+app.all('/*', (c) => {
+  console.log('[unmatched] path:', c.req.path, 'method:', c.req.method, 'url:', c.req.url);
+  return c.text('NOT_FOUND', 404);
+});
+
 export default app;
