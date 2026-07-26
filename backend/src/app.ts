@@ -34,20 +34,4 @@ app.onError((err, c) => {
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
-
-
-// ─── Debug: show matched route info on any path ─────────────────────────────
-
-app.all('/*', (c) => {
-  return c.json({
-    path: c.req.path,
-    method: c.req.method,
-    url: c.req.url,
-    routePath: c.req.routePath,
-    host: c.req.header('host'),
-    xForwardedHost: c.req.header('x-forwarded-host'),
-    xForwardedProto: c.req.header('x-forwarded-proto'),
-  });
-});
-
 export default app;
