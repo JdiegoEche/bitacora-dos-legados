@@ -25,7 +25,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,json}'],
         runtimeCaching: [
           {
-            urlPattern: /^\/api\/(auth|beans|brews|stats)\/.*/i,
+            urlPattern: /^\/api\/(beans|brews|stats)\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-user',
