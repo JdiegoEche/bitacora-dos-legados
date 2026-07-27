@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['coffee-cup.svg'],
+      includeAssets: ['coffee-cup.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Bitácora Café',
         short_name: 'Bitácora',
