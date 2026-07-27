@@ -82,11 +82,11 @@ export default function BeanForm({ bean, onClose, onCreated }: BeanFormProps) {
             className="input"
           >
             <option value="">— Seleccionar —</option>
-            <option value="claro">Claro</option>
-            <option value="medio-claro">Medio-Claro</option>
-            <option value="medio">Medio</option>
-            <option value="medio-con-desarrollo">Medio con desarrollo</option>
-            <option value="alta">Alta</option>
+            <option value="Claro">Claro</option>
+            <option value="Medio-claro">Medio-Claro</option>
+            <option value="Medio">Medio</option>
+            <option value="Medio-con-desarrollo">Medio con desarrollo</option>
+            <option value="Alta">Alta</option>
           </select>
         </label>
 
