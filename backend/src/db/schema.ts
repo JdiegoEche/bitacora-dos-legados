@@ -16,7 +16,7 @@ export const users = pgTable('users', {
 export const coffeeBeans = pgTable('coffee_beans', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
-  roaster: text('roaster').notNull(),
+  roaster: text('roaster'),
   origin: text('origin'),
   roastLevel: text('roast_level'),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

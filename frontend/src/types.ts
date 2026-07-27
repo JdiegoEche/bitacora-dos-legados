@@ -9,7 +9,7 @@ export interface User {
 export interface CoffeeBean {
   id: number;
   name: string;
-  roaster: string;
+  roaster: string | null;
   origin: string | null;
   roastLevel: string | null;
   createdAt: string;
@@ -68,7 +68,7 @@ export interface CreateBrewData {
 
 export interface CreateBeanData {
   name: string;
-  roaster: string;
+  roaster?: string | null;
   origin?: string | null;
   roastLevel?: string | null;
 }

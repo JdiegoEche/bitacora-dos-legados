@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export const createBeanSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  roaster: z.string().min(1, 'Roaster is required'),
+  roaster: z.string().nullable().optional(),
   origin: z.string().nullable().optional(),
   roastLevel: z.string().nullable().optional(),
 });
