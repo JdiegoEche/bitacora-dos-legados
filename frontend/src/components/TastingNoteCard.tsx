@@ -4,7 +4,7 @@ import type { TastingNote } from '../types';
 
 function ratingLabel(n: number | null): string {
   if (n == null) return '';
-  return `Rating: ${n}/5`;
+  return `Calificación: ${n}/5`;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -30,17 +30,17 @@ export default function TastingNoteCard({
         )}
         {note.flavor && (
           <span>
-            <strong>Flavor:</strong> {note.flavor}
+            <strong>Sabor:</strong> {note.flavor}
           </span>
         )}
         {note.body && (
           <span>
-            <strong>Body:</strong> {note.body}
+            <strong>Cuerpo:</strong> {note.body}
           </span>
         )}
         {note.acidity && (
           <span>
-            <strong>Acidity:</strong> {note.acidity}
+            <strong>Acidez:</strong> {note.acidity}
           </span>
         )}
       </div>
@@ -54,7 +54,7 @@ export default function TastingNoteCard({
           className="btn btn-small btn-danger"
           disabled={isDeleting}
         >
-          Delete
+          Eliminar
         </button>
       </div>
     </div>

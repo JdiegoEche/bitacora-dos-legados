@@ -48,18 +48,18 @@ export default function TastingNotesList({ brewId }: TastingNotesListProps) {
   };
 
   if (error) {
-    return <div className="state-error">Failed to load tasting notes.</div>;
+    return <div className="state-error">Error al cargar las notas de cata.</div>;
   }
 
   return (
     <section className="notes-section">
-      <h3>Tasting Notes</h3>
+      <h3>Notas de cata</h3>
 
       {/* Existing notes */}
       {isLoading ? (
-        <div className="state-msg">Loading notes…</div>
+        <div className="state-msg">Cargando notas…</div>
       ) : !notes || notes.length === 0 ? (
-        <p className="empty-note">No tasting notes recorded yet.</p>
+        <p className="empty-note">Todavía no hay notas de cata.</p>
       ) : (
         <div className="note-cards">
           {notes.map((note) => (
@@ -77,12 +77,12 @@ export default function TastingNotesList({ brewId }: TastingNotesListProps) {
       <div className="note-form-wrapper">
         {deleteMutation.isError && (
           <div className="state-error">
-            Failed to delete note: {(deleteMutation.error as Error).message}
+            Error al eliminar la nota: {(deleteMutation.error as Error).message}
           </div>
         )}
         {createMutation.isError && (
           <div className="state-error">
-            Failed to add note: {(createMutation.error as Error).message}
+            Error al agregar la nota: {(createMutation.error as Error).message}
           </div>
         )}
 

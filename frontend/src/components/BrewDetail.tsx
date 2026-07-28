@@ -11,7 +11,7 @@ import { useToast } from '../contexts/ToastContext';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -80,7 +80,7 @@ export default function BrewDetail() {
   };
 
   if (Number.isNaN(brewId)) {
-    return <div className="state-error">Invalid brew ID.</div>;
+    return <div className="state-error">ID de preparación inválido.</div>;
   }
 
   if (isLoading) return <BrewDetailSkeleton />;
@@ -88,8 +88,8 @@ export default function BrewDetail() {
   if (error || !brew) {
     return (
       <div className="state-error">
-        Brew session not found.{' '}
-        <Link to="/bitacora">Back to list</Link>
+        Preparación no encontrada.{' '}
+        <Link to="/bitacora">Volver al listado</Link>
       </div>
     );
   }
@@ -101,10 +101,10 @@ export default function BrewDetail() {
         to={brew.coffeeBeanId ? `/bitacora/${brew.coffeeBeanId}` : '/bitacora'}
       />
       <div className="detail-header">
-        <h2>{brew.method} Brew</h2>
+        <h2>Preparación de {brew.method}</h2>
         <div className="detail-actions">
           <Link to={`/brews/${brew.id}/edit`} className="btn">
-            Edit
+            Editar
           </Link>
           <button
             className="btn btn-danger"
@@ -124,7 +124,7 @@ export default function BrewDetail() {
         <Field label="Tiempo" value={brew.brewTime ? `${brew.brewTime}s` : '—'} />
         <Field label="Café" value={brew.coffeeDose ? `${brew.coffeeDose}g` : '—'} />
         <Field label="Agua" value={brew.waterDose ? `${brew.waterDose}g` : '—'} />
-        <Field label="Rating" value={stars(brew.rating ? Number(brew.rating) : null)} />
+        <Field label="Calificación" value={stars(brew.rating ? Number(brew.rating) : null)} />
 
         {brew.coffeeBean && (
           <Field

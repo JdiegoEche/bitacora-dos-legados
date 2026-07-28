@@ -15,7 +15,7 @@ body {
   color: var(--color-foreground);
   background: var(--color-background);
   transition: background var(--transition-base), color var(--transition-base);
-  padding: 5px;
+  padding: 10px;
 }
 
 /* ─── Shadow utilities ─────────────────────────────────────────────────── */
@@ -295,6 +295,10 @@ textarea.input {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+}
+
+.detail-header h2 {
+  margin: 0 0.1rem;
 }
 
 .detail-actions {
@@ -1175,18 +1179,70 @@ a.cta-card:hover {
 }
 
 .bean-card-name {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--color-foreground);
   margin: 0;
 }
 
+.bean-card-roaster {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-muted-fg);
+  margin: -0.25rem 0 0;
+}
+
 .bean-card-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
   font-size: 0.85rem;
   color: var(--color-muted-fg);
+}
+
+.bean-card-origin {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roast-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-muted-fg);
+  white-space: nowrap;
+}
+
+.roast-badge::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--roast-dot-color, var(--color-gold));
+  flex-shrink: 0;
+}
+
+.roast-badge--light {
+  --roast-dot-color: var(--color-gold-light);
+}
+
+.roast-badge--medium {
+  --roast-dot-color: var(--color-gold);
+}
+
+.roast-badge--dark {
+  --roast-dot-color: var(--color-espresso);
 }
 
 /* ─── Bean Detail ───────────────────────────────────────────────────── */

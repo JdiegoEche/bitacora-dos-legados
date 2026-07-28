@@ -66,8 +66,8 @@ describe('BrewForm — preSelectedBeanId', () => {
 
     // Should NOT render a standalone <select> for beans (the inline selector)
     const selects = screen.queryAllByRole('combobox');
-    // No selects at all (rating is now a text input)
-    expect(selects).toHaveLength(0);
+    // Only the grindSize select remains (no bean selector)
+    expect(selects).toHaveLength(1);
   });
 
   it('renders inline bean selector when preSelectedBeanId is NOT set', async () => {
@@ -77,8 +77,8 @@ describe('BrewForm — preSelectedBeanId', () => {
     expect(screen.getByRole('combobox', { name: /café/i })).toBeInTheDocument();
     // Should render an inline <select> for bean selection
     const selects = screen.getAllByRole('combobox');
-    // One select: only the bean selector (rating is now a text input)
-    expect(selects).toHaveLength(1);
+    // Two selects: the grindSize select and the bean selector
+    expect(selects).toHaveLength(2);
     // The bean select should list fetched beans
     await waitFor(() => {
       expect(screen.getByText(/ethiopia yirgacheffe/i)).toBeInTheDocument();
@@ -103,9 +103,9 @@ describe('BrewForm — preSelectedBeanId', () => {
       screen.getByPlaceholderText(/v60, aeropress/i),
       'V60',
     );
-    await userEvent.type(
-      screen.getByPlaceholderText(/media, fina/i),
-      'medium',
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /molienda/i }),
+      'Media',
     );
     // Water temp
     const numberInputs = screen.getAllByRole('spinbutton');

@@ -138,13 +138,20 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
 
         <label className="field">
           Molienda *
-          <input
+          <select
             required
             value={form.grindSize}
             onChange={(e) => set('grindSize', e.target.value)}
-            placeholder="media, fina, gruesa…"
             className="input"
-          />
+          >
+            <option value="">— Seleccionar —</option>
+            <option value="Muy fina">Muy fina</option>
+            <option value="Fina">Fina</option>
+            <option value="Medio-fina">Medio-fina</option>
+            <option value="Media">Media</option>
+            <option value="Media-gruesa">Media-gruesa</option>
+            <option value="Gruesa">Gruesa</option>
+          </select>
         </label>
 
         <div className="field-row">
@@ -178,7 +185,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
             <input
               value={form.grinder}
               onChange={(e) => set('grinder', e.target.value)}
-              placeholder="Eureka Mignon, Comandante…"
+              placeholder="Comandante, Timemore....."
               className="input"
             />
           </label>
@@ -252,15 +259,7 @@ export default function BrewForm({ brewId, initialData, preSelectedBeanId }: Bre
           </label>
         </div>
 
-        <label className="field">
-          Notas
-          <textarea
-            value={form.notes}
-            onChange={(e) => set('notes', e.target.value)}
-            rows={3}
-            className="input"
-          />
-        </label>
+    
 
         {mutation.isError && (
           <div className="state-error">

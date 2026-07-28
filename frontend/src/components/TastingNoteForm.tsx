@@ -56,16 +56,16 @@ export default function TastingNoteForm({
           <input
             value={aroma}
             onChange={(e) => setAroma(e.target.value)}
-            placeholder="floral, nutty…"
+            placeholder="floral, a nuez…"
             className="input"
           />
         </label>
         <label className="field">
-          Flavor
+          Sabor
           <input
             value={flavor}
             onChange={(e) => setFlavor(e.target.value)}
-            placeholder="berry, chocolate…"
+            placeholder="frutos rojos, chocolate…"
             className="input"
           />
         </label>
@@ -73,27 +73,27 @@ export default function TastingNoteForm({
 
       <div className="note-form-row">
         <label className="field">
-          Body
+          Cuerpo
           <input
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="light, full…"
+            placeholder="liviano, con cuerpo…"
             className="input"
           />
         </label>
         <label className="field">
-          Acidity
+          Acidez
           <input
             value={acidity}
             onChange={(e) => setAcidity(e.target.value)}
-            placeholder="bright, crisp…"
+            placeholder="brillante, vibrante…"
             className="input"
           />
         </label>
       </div>
 
       <label className="field">
-        Rating (1–5)
+        Calificación (1–5)
         <select
           value={rating}
           onChange={(e) => setRating(e.target.value)}
@@ -109,18 +109,18 @@ export default function TastingNoteForm({
       </label>
 
       <label className="field">
-        Notes
+        Notas
         <textarea
           value={freeText}
           onChange={(e) => setFreeText(e.target.value)}
           rows={2}
           className="input"
-          placeholder="Any additional thoughts…"
+          placeholder="Comentarios adicionales…"
         />
       </label>
 
       <button type="submit" disabled={isSubmitting} className="btn">
-        {isSubmitting ? 'Saving…' : 'Add Note'}
+        {isSubmitting ? 'Guardando…' : 'Agregar nota'}
       </button>
     </form>
   );

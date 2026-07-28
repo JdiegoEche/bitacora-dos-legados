@@ -6,7 +6,7 @@ import TastingNotesList from './TastingNotesList';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', {
+  return new Date(iso).toLocaleDateString('es-AR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -69,7 +69,7 @@ export default function SharedBrewView() {
           <Field label="Tiempo" value={brew.brewTime ? `${brew.brewTime}s` : '—'} />
           <Field label="Café" value={brew.coffeeDose ? `${brew.coffeeDose}g` : '—'} />
           <Field label="Agua" value={brew.waterDose ? `${brew.waterDose}g` : '—'} />
-          <Field label="Rating" value={stars(brew.rating ? Number(brew.rating) : null)} />
+          <Field label="Calificación" value={stars(brew.rating ? Number(brew.rating) : null)} />
 
           {brew.coffeeBean && (
             <Field

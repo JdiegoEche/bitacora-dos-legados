@@ -19,16 +19,16 @@ export default function BrewEdit() {
   });
 
   if (Number.isNaN(brewId)) {
-    return <div className="state-error">Invalid brew ID.</div>;
+    return <div className="state-error">ID de preparación inválido.</div>;
   }
 
-  if (isLoading) return <div className="state-msg">Loading brew data…</div>;
+  if (isLoading) return <div className="state-msg">Cargando datos de la preparación…</div>;
 
   if (error || !brew) {
     return (
       <div className="state-error">
-        Brew session not found.{' '}
-        <Link to="/bitacora">Back to list</Link>
+        Preparación no encontrada.{' '}
+        <Link to="/bitacora">Volver al listado</Link>
       </div>
     );
   }

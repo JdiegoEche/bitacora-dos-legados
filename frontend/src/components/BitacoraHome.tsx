@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { beansApi } from '../api/client';
@@ -16,58 +16,11 @@ function formatRoast(level: string | null): string {
   return level || '—';
 }
 
-// ─── Stats Bentobox ───────────────────────────────────────────────────
-
-function StatsSummary({ beans }: { beans: CoffeeBean[] }) {
-  const stats = useMemo(() => {
-    const roasters = new Set(beans.map(b => b.roaster));
-    const origins = new Set(beans.map(b => b.origin).filter(Boolean));
-    return {
-      total: beans.length,
-      roasters: roasters.size,
-      origins: origins.size,
-    };
-  }, [beans]);
-
-  const items = [
-    { label: 'Cafés', value: stats.total, icon: 'beans' },
-    { label: 'Tostadores', value: stats.roasters, icon: 'roaster' },
-    { label: 'Orígenes', value: stats.origins, icon: 'origin' },
-  ] as const;
-
-  return (
-    <div className="stats-bento">
-      {items.map((item) => (
-        <div key={item.label} className="stat-card">
-          <div className="stat-icon">
-            {item.icon === 'beans' && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2C8 2 4 5 4 9c0 3 2 6 4 8s4 5 4 5" />
-                <path d="M12 2c4 0 8 3 8 7 0 3-2 6-4 8s-4 5-4 5" />
-              </svg>
-            )}
-            {item.icon === 'roaster' && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            )}
-            {item.icon === 'origin' && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="2" y1="12" x2="22" y2="12" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-            )}
-          </div>
-          <div className="stat-value">{item.value}</div>
-          <div className="stat-label">{item.label}</div>
-        </div>
-      ))}
-    </div>
-  );
+function roastTone(level: string | null): 'light' | 'medium' | 'dark' {
+  const normalized = (level || '').toLowerCase();
+  if (normalized.includes('oscuro') || normalized.includes('dark') || normalized === 'alta') return 'dark';
+  if (normalized.includes('claro') || normalized.includes('light')) return 'light';
+  return 'medium';
 }
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -126,8 +79,6 @@ export default function BitacoraHome() {
         </button>
       </div>
 
-      <StatsSummary beans={beans} />
-
       <div className="bean-card-grid">
         {beans.map((bean: CoffeeBean) => (
           <Link
@@ -136,10 +87,14 @@ export default function BitacoraHome() {
             className="bean-card"
           >
             <h3 className="bean-card-name">{bean.name}</h3>
+            {bean.roaster && (
+              <p className="bean-card-roaster">{bean.roaster}</p>
+            )}
             <div className="bean-card-meta">
-              <span className="bean-card-roaster">{bean.roaster}</span>
               <span className="bean-card-origin">{formatOrigin(bean.origin)}</span>
-              <span className="bean-card-roast">{formatRoast(bean.roastLevel)}</span>
+              <span className={`roast-badge roast-badge--${roastTone(bean.roastLevel)}`}>
+                {formatRoast(bean.roastLevel)}
+              </span>
             </div>
           </Link>
         ))}
