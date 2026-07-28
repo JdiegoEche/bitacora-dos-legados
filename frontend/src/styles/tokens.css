@@ -82,7 +82,7 @@
 /* ─── Dark mode ─────────────────────────────────────────────────────────── */
 
 [data-theme="dark"] {
-  --color-primary: #B45309;
+  --color-primary: #141414;
   --color-primary-hover: #92400E;
   --color-secondary: #D97706;
   --color-accent: #F59E0B;

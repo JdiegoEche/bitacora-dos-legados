@@ -43,8 +43,8 @@ export default function LandingPage() {
           </p>
         </Link>
 
-        {/* Recetas — placeholder */}
-        <div className="cta-card cta-card--placeholder">
+        {/* Recetas */}
+        <Link to="/recetas" className="cta-card">
           <div className="cta-icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -69,33 +69,7 @@ export default function LandingPage() {
             Creá y editá recetas detalladas con métodos, proporciones y notas de
             catación.
           </p>
-          <span className="cta-badge">Próximamente</span>
-        </div>
-
-        {/* Diario — placeholder */}
-        <div className="cta-card cta-card--placeholder">
-          <div className="cta-icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="40"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </div>
-          <h3 className="cta-title">Diario</h3>
-          <p className="cta-desc">
-            Llevá un registro personal
-          </p>
-          <span className="cta-badge">Próximamente</span>
-        </div>
+        </Link>
       </section>
     </div>
   );

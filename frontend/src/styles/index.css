@@ -229,6 +229,16 @@ textarea.input {
   text-decoration: none;
 }
 
+/* Modo oscuro: el botón primario es negro, así que necesita un borde
+   dorado sutil para no perderse contra el fondo también oscuro. */
+[data-theme="dark"] .btn {
+  border: 1px solid var(--color-gold-dark);
+}
+
+[data-theme="dark"] .btn:hover {
+  border-color: var(--color-gold);
+}
+
 .btn:active {
   transform: scale(0.97);
 }
