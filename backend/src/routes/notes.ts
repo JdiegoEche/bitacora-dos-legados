@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { noteService } from '../services/note-service.js';
 import {
   createNoteSchema,
+  updateNoteSchema,
   idParamSchema,
   brewIdParamSchema,
 } from '../lib/validators.js';
@@ -40,10 +41,30 @@ noteRouter.post(
     const { brewId } = c.req.valid('param');
     const data = c.req.valid('json');
 
-    const note = await noteService.create(brewId, data, userId);
-    if (!note) return c.json({ error: 'Brew session not found' }, 404);
+    const result = await noteService.create(brewId, data, userId);
+    if (result === 'not_found') return c.json({ error: 'Brew session not found' }, 404);
+    if (result === 'conflict') {
+      return c.json({ error: 'This brew already has a tasting note' }, 409);
+    }
 
-    return c.json(note, 201);
+    return c.json(result, 201);
+  },
+);
+
+// PUT /api/notes/:id — update a single note (ownership verified via brew session)
+noteRouter.put(
+  '/notes/:id',
+  zValidator('param', idParamSchema),
+  zValidator('json', updateNoteSchema),
+  async (c) => {
+    const userId = c.get('userId');
+    const { id } = c.req.valid('param');
+    const data = c.req.valid('json');
+
+    const note = await noteService.update(id, data, userId);
+    if (!note) return c.json({ error: 'Tasting note not found' }, 404);
+
+    return c.json(note);
   },
 );
 

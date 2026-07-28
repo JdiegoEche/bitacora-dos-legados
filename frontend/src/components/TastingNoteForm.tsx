@@ -1,17 +1,20 @@
 import { useState } from 'react';
+import type { TastingNote } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+type NoteFields = Pick<
+  TastingNote,
+  'aroma' | 'flavor' | 'body' | 'acidity' | 'rating' | 'freeText'
+>;
+
 interface TastingNoteFormProps {
-  onSubmit: (data: {
-    aroma: string | null;
-    flavor: string | null;
-    body: string | null;
-    acidity: string | null;
-    rating: number | null;
-    freeText: string | null;
-  }) => void;
+  onSubmit: (data: NoteFields) => void;
   isSubmitting?: boolean;
+  /** When set, the form operates in edit mode and pre-fills these values. */
+  initialData?: NoteFields;
+  /** Shown only in edit mode, to exit without saving. */
+  onCancel?: () => void;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -19,13 +22,19 @@ interface TastingNoteFormProps {
 export default function TastingNoteForm({
   onSubmit,
   isSubmitting,
+  initialData,
+  onCancel,
 }: TastingNoteFormProps) {
-  const [aroma, setAroma] = useState('');
-  const [flavor, setFlavor] = useState('');
-  const [body, setBody] = useState('');
-  const [acidity, setAcidity] = useState('');
-  const [rating, setRating] = useState('');
-  const [freeText, setFreeText] = useState('');
+  const isEdit = initialData != null;
+
+  const [aroma, setAroma] = useState(initialData?.aroma ?? '');
+  const [flavor, setFlavor] = useState(initialData?.flavor ?? '');
+  const [body, setBody] = useState(initialData?.body ?? '');
+  const [acidity, setAcidity] = useState(initialData?.acidity ?? '');
+  const [rating, setRating] = useState(
+    initialData?.rating ? String(initialData.rating) : '',
+  );
+  const [freeText, setFreeText] = useState(initialData?.freeText ?? '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +48,15 @@ export default function TastingNoteForm({
       freeText: freeText.trim() || null,
     });
 
-    // Reset form after submit
-    setAroma('');
-    setFlavor('');
-    setBody('');
-    setAcidity('');
-    setRating('');
-    setFreeText('');
+    if (!isEdit) {
+      // Reset form after submit — only in "add" mode, where the form stays open
+      setAroma('');
+      setFlavor('');
+      setBody('');
+      setAcidity('');
+      setRating('');
+      setFreeText('');
+    }
   };
 
   return (
@@ -119,9 +130,21 @@ export default function TastingNoteForm({
         />
       </label>
 
-      <button type="submit" disabled={isSubmitting} className="btn">
-        {isSubmitting ? 'Guardando…' : 'Agregar nota'}
-      </button>
+      <div className="note-form-actions">
+        <button type="submit" disabled={isSubmitting} className="btn">
+          {isSubmitting ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Agregar nota'}
+        </button>
+        {isEdit && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="btn btn-secondary"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 }

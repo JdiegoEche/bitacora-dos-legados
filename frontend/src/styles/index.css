@@ -557,6 +557,16 @@ textarea.input {
   margin-top: 0.4rem;
 }
 
+.note-footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.note-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .note-rating-select {
   max-width: 200px;
 }

@@ -27,7 +27,7 @@ export const noteService = {
     brewId: number,
     data: CreateNoteInput,
     userId: number,
-  ): Promise<TastingNote | null> {
+  ): Promise<TastingNote | 'not_found' | 'conflict'> {
     // Verify brew belongs to user
     const brew = await db
       .select({ id: brewSessions.id })
@@ -35,13 +35,56 @@ export const noteService = {
       .where(and(eq(brewSessions.id, brewId), eq(brewSessions.userId, userId)))
       .limit(1);
 
-    if (!brew.length) return null;
+    if (!brew.length) return 'not_found';
+
+    // A brew session gets at most one tasting note
+    const existing = await db
+      .select({ id: tastingNotes.id })
+      .from(tastingNotes)
+      .where(eq(tastingNotes.brewSessionId, brewId))
+      .limit(1);
+
+    if (existing.length) return 'conflict';
 
     const [note] = await db
       .insert(tastingNotes)
       .values({ ...data, brewSessionId: brewId, userId })
       .returning();
     return note;
+  },
+
+  async update(
+    id: number,
+    data: Partial<CreateNoteInput>,
+    userId: number,
+  ): Promise<TastingNote | null> {
+    // First find the note, then verify its parent brew belongs to the user
+    const [note] = await db
+      .select()
+      .from(tastingNotes)
+      .where(eq(tastingNotes.id, id))
+      .limit(1);
+
+    if (!note) return null;
+
+    // Verify the parent brew belongs to the user
+    const brew = await db
+      .select({ id: brewSessions.id })
+      .from(brewSessions)
+      .where(
+        and(eq(brewSessions.id, note.brewSessionId), eq(brewSessions.userId, userId)),
+      )
+      .limit(1);
+
+    if (!brew.length) return null;
+
+    const [updated] = await db
+      .update(tastingNotes)
+      .set({ ...data })
+      .where(eq(tastingNotes.id, id))
+      .returning();
+
+    return updated ?? null;
   },
 
   async delete(id: number, userId: number): Promise<boolean> {

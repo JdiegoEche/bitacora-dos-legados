@@ -160,6 +160,12 @@ export const notesApi = {
       body: JSON.stringify(data),
     }),
 
+  update: (id: number, data: Partial<CreateNoteData>) =>
+    request<TastingNote>(`/api/notes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   delete: (id: number) =>
     request<void>(`/api/notes/${id}`, { method: 'DELETE' }),
 };

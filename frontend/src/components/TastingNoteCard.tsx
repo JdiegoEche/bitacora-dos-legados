@@ -11,12 +11,14 @@ function ratingLabel(n: number | null): string {
 
 interface TastingNoteCardProps {
   note: TastingNote;
+  onEdit: (id: number) => void;
   onDelete: (id: number) => void;
   isDeleting?: boolean;
 }
 
 export default function TastingNoteCard({
   note,
+  onEdit,
   onDelete,
   isDeleting,
 }: TastingNoteCardProps) {
@@ -49,13 +51,22 @@ export default function TastingNoteCard({
 
       <div className="note-footer">
         <span className="note-rating">{ratingLabel(note.rating)}</span>
-        <button
-          onClick={() => onDelete(note.id)}
-          className="btn btn-small btn-danger"
-          disabled={isDeleting}
-        >
-          Eliminar
-        </button>
+        <div className="note-footer-actions">
+          <button
+            onClick={() => onEdit(note.id)}
+            className="btn btn-small btn-secondary"
+            disabled={isDeleting}
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => onDelete(note.id)}
+            className="btn btn-small btn-danger"
+            disabled={isDeleting}
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
     </div>
   );

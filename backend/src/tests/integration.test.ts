@@ -279,6 +279,35 @@ describe('POST /api/brews/:brewId/notes', () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it('returns 409 when the brew already has a tasting note', async () => {
+    const brewRes = await app.request('/api/brews', {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: 'Chemex',
+        grindSize: 'medium-coarse',
+        waterTemp: 92,
+        brewTime: '240',
+        coffeeDose: 30,
+        waterDose: 500,
+      }),
+    });
+    const brew = await brewRes.json();
+
+    await app.request(`/api/brews/${brew.id}/notes`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ aroma: 'floral' }),
+    });
+
+    const res = await app.request(`/api/brews/${brew.id}/notes`, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ aroma: 'second attempt' }),
+    });
+    expect(res.status).toBe(409);
+  });
 });
 
 describe('GET /api/brews/:brewId/notes', () => {
@@ -297,16 +326,11 @@ describe('GET /api/brews/:brewId/notes', () => {
     });
     const brew = await brewRes.json();
 
-    // Add 2 notes
+    // A brew only ever gets one tasting note
     await app.request(`/api/brews/${brew.id}/notes`, {
       method: 'POST',
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ aroma: 'nutty' }),
-    });
-    await app.request(`/api/brews/${brew.id}/notes`, {
-      method: 'POST',
-      headers: { ...authHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flavor: 'caramel' }),
     });
 
     const res = await app.request(`/api/brews/${brew.id}/notes`, {
@@ -314,7 +338,7 @@ describe('GET /api/brews/:brewId/notes', () => {
     });
     expect(res.status).toBe(200);
     const notes = await res.json();
-    expect(notes).toHaveLength(2);
+    expect(notes).toHaveLength(1);
   });
 
   it('returns 404 for brew that does not exist', async () => {

@@ -138,6 +138,15 @@ export default function BrewDetail() {
         )}
       </div>
 
+      {brew.notes && (
+        <div className="detail-notes">
+          <h3>Notas</h3>
+          <p>{brew.notes}</p>
+        </div>
+      )}
+
+      <TastingNotesList brewId={brew.id} />
+
       {/* ── Share section ── */}
       <div className="share-section">
         <h3>Compartir preparación</h3>
@@ -175,15 +184,6 @@ export default function BrewDetail() {
           </div>
         )}
       </div>
-
-      {brew.notes && (
-        <div className="detail-notes">
-          <h3>Notas</h3>
-          <p>{brew.notes}</p>
-        </div>
-      )}
-
-      <TastingNotesList brewId={brew.id} />
 
       {showDeleteDialog && (
         <ConfirmDialog
